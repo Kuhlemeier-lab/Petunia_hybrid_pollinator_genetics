@@ -6,5 +6,5 @@
 
 #### Raw reads download
 
-01_get_raw_reads.sh
+01_get_raw_reads.sh and rename_reads.sh with reference table reads_sample_ID.csv.
 
