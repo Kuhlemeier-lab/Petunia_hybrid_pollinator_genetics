@@ -20,13 +20,20 @@ Then performs a second quality control.
 ### Alignment
 
 Genome index done with script 03_index.sh.
-Alignment done with BWA, script 04_align.sh, parameters:
+
+Alignment done with BWA, script 04_align.sh, with BWA-MEM default parameters.
+
+Duplicated reads marking done with 05a_markdup_metrics_coverage.sh, which also calculate some stats about the read mapped and extracts the coordinates of the regions with coverage higher than 100 reads. These regions will be then excluded from the variant calling. The regions to exclude are merged with the annotated repetitive regions.
+
+
 
 
 ## Software versions
 
-sratoolkit/2.10.7
-fastqc/0.11.7
-trimmomatic/0.36
-bwa/0.7.17
-samtools/1.10
+- bwa/0.7.17
+- fastqc/0.11.7
+- samtools/1.10
+- sratoolkit/2.10.7
+- trimmomatic/0.36
+
+
