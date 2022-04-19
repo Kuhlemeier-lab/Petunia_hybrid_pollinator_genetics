@@ -39,7 +39,7 @@ Genome index done with script [03_index.sh](code/03_index.sh).
 
 Alignment done with BWA, script [04_align.sh](code/04_align.sh), with BWA-MEM default parameters.
 
-Duplicated reads marking done with [05a_markdup_metrics_coverage.sh](code/05a_markdup_metrics_coverage.sh), which also calculate some stats about the read mapped and extracts the coordinates of the regions with coverage higher than 100 reads. These regions were then excluded from the variant calling together with the repetitive regions. Repetitive regions identified with repeatMasker, including the modeled regions on the reference genome and [the TREP complete nucleotide database release 19](https://trep-db.uzh.ch/). Step performed in script [05b_mark_repetitive_regions.sh](code/05b_mark_repetitive_regions.sh). The regions to exclude are merged with the annotated repetitive regions with an R script XXX.
+Duplicated reads marking done with [05a_markdup_metrics_coverage.sh](code/05a_markdup_metrics_coverage.sh), which also calculate some stats about the read mapped and extracts the coordinates of the regions with coverage higher than 100 reads. These regions were then excluded from the variant calling together with the repetitive regions. Repetitive regions identified with repeatMasker, including the modeled regions on the reference genome and [the TREP complete nucleotide database release 19](https://trep-db.uzh.ch/). Step performed in script [05b_mark_repetitive_regions.sh](code/05b_mark_repetitive_regions.sh). The regions to exclude are merged with the annotated repetitive regions with an R script [05c_regions_to_mask.R](code/05c_regions_to_mask.R).
 
 Some numbers of mapped reads, duplicated reads, genome and gene space coverage are listed in [alignment_metrics.csv](data/alignment_metrics.csv).
 
@@ -62,6 +62,7 @@ Performed with GATK v 4.0.4.0, following best practices. Since Petunia does not 
 ## Software versions
 
 - bwa/0.7.17
+- covtobed/1.2.0 https://github.com/telatin/covtobed
 - fastqc/0.11.7
 - R on the computing cluster 3.4.2
 - R on the local machine 3.3.3
