@@ -21,7 +21,7 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 #### Raw reads download
 
-[01_get_raw_reads.sh](code/01_get_raw_reads.sh) and [rename_reads.sh](code/rename_reads.sh) with reference table [reads_sample_ID.csv](reads_sample_ID.csv).
+[01_get_raw_reads.sh](code/01_get_raw_reads.sh) and [rename_reads.sh](code/rename_reads.sh) with reference table [reads_sample_ID.csv](data/reads_sample_ID.csv).
 
 #### Quality control and trimming
 
