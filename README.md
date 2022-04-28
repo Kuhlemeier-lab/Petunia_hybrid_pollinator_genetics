@@ -25,17 +25,16 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 #### Quality control and trimming
 
-[02_trim_rawreads.sh](code/02_trim_rawreads.sh) performs quality control with fastqc, then trims the reads with parameters:
+[02a_trim_rawreads.sh](code/02a_trim_rawreads.sh) performs quality control with fastqc, then trims the reads with parameters:
 ` LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:100 `. It then performs a second quality control.
 
-[02_fqc_summary.sh](code/02_fqc_summary.sh) summarises the output of fastqc using a python script: [fastqc_parser.py](code/fastqc_parser.py).
+[02b_fqc_summary.sh](code/02b_fqc_summary.sh) summarises the output of fastqc using a python script: [fastqc_parser.py](code/fastqc_parser.py).
 The read counts for raw and trimmed reads is in [raw_reads_count.csv](data/raw_reads_count.csv).
-
 
 
 ### Alignment
 
-Genome index done with script [03_index.sh](code/03_index.sh).
+Genome index and dictionary done with script [03_index_dictionary.sh](code/03_index_dictionary.sh).
 
 Alignment done with BWA, script [04_align.sh](code/04_align.sh), with BWA-MEM default parameters.
 
@@ -55,7 +54,10 @@ Some numbers of mapped reads, duplicated reads, genome and gene space coverage a
 
 ### Variant calling
 
-Performed with GATK v 4.0.4.0, following best practices. Since Petunia does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. This is done with XXX which uses [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots.
+Performed with GATK v 4.0.4.0, following best practices. Since Petunia does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. 
+
+Variant calling performed with script [06_call_variants.sh](code/06_call_variants.sh). We then combined the g.vcf files with script [07_combine_gvcfs.sh](code/07_combine_gvcfs.sh). The genotype calling and variant quality evaluation is done with script [08_genotype_gvcfs_quality.sh](08_genotype_gvcfs_quality.sh). In this script we call an R script to plot the distribution of the quality values to verify that the hard filters proposed by GATK are appropriate. This is done with [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots.
+
 
 
 
@@ -63,7 +65,10 @@ Performed with GATK v 4.0.4.0, following best practices. Since Petunia does not 
 
 - bwa/0.7.17
 - covtobed/1.2.0 https://github.com/telatin/covtobed
+- fastp/0.19.5
 - fastqc/0.11.7
+- GenomeAnalysisTK/4.1.3.0
+- picard-tools/2.21.8
 - R on the computing cluster 3.4.2
 - R on the local machine 3.3.3
 - RepeatModeler/1.0.11
