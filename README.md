@@ -54,12 +54,21 @@ Some numbers of mapped reads, duplicated reads, genome and gene space coverage a
 
 ### Variant calling
 
-Performed with GATK v 4.0.4.0, following best practices. Since Petunia does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. 
+Performed with GATK v 4.1.3.0, following best practices. Since Petunia does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. 
 
-Variant calling performed with script [06_call_variants.sh](code/06_call_variants.sh). We then combined the g.vcf files with script [07_combine_gvcfs.sh](code/07_combine_gvcfs.sh). The genotype calling and variant quality evaluation is done with script [08_genotype_gvcfs_quality.sh](08_genotype_gvcfs_quality.sh). In this script we call an R script to plot the distribution of the quality values to verify that the hard filters proposed by GATK are appropriate. This is done with [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots.
+Variant calling performed with script [06_call_variants.sh](code/06_call_variants.sh). We then combined the g.vcf files with script [07_combine_gvcfs.sh](code/07_combine_gvcfs.sh). The genotype calling and variant quality evaluation is done with script [08_genotype_gvcfs_quality.sh](08_genotype_gvcfs_quality.sh). In this script we call an R script to plot the distribution of the quality values to verify that the hard filters proposed by GATK are appropriate. This is done with [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots which can be seen in [indel_quality.pdf](data/indel_quality.pdf) and [snp_quality.pdf](data/snp_quality.pdf).
 
+#### Variant filtering
 
+The set of variants is filtered with script [09_filtervcf_quality.sh](code/09_filtervcf_quality.sh).
 
+In this script we filter the set of variants obtained in order to select only those passing quality filters. We then select only variants that are biallelic, and have a call rate higher than 90% across samples, and we exclude the INDELs. We then use ANGSD to calculate the minor allele frequency (MAF) out of the genotype likelihoods, and select only the variants with minor allele frequency > 0.05.
+
+The non-filtered set of variants includes 15 825 083 positions, the quality filtered variants include 13 765 369 positions, the biallelic set includes 12 650 209, the call rate > 90%, only INDELs includes 7 454 530 positions, the MAF > 0.05 includes 4 278 736 positions.
+
+#### Convert vcf to genotype likelihood file (beagle format)
+
+To use the genotype likelihoods in some analyses we had to have them in Beagle format, so I wrote a python script [gatkPLtobeagleGL.py](code/gatkPLtobeagleGL.py) to convert the PL field in the GATK vcf file into genotype likelihoods. Note that missing genoptypes are encoded as 0.33,0.33,0.33 in the output. The conversion is done in script [10_PLtoGL.sh](code/10_PLtoGL.sh).
 
 ## Software versions
 
