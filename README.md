@@ -70,6 +70,16 @@ The non-filtered set of variants includes 15 825 083 positions, the quality filt
 
 To use the genotype likelihoods in some analyses we had to have them in Beagle format, so I wrote a python script [gatkPLtobeagleGL.py](code/gatkPLtobeagleGL.py) to convert the PL field in the GATK vcf file into genotype likelihoods. Note that missing genoptypes are encoded as 0.33,0.33,0.33 in the output. The conversion is done in script [10_PLtoGL.sh](code/10_PLtoGL.sh).
 
+### Admixture analysis
+
+Converted `.log` output of ngsadmix with the script [ngsadmix_outparser.py](code/ngsadmix_outparser.py):
+
+```
+python code/ngsadmix_outparser.py -p data/raw/admixture
+```
+
+
+
 ## Software versions
 
 - bwa/0.7.17
