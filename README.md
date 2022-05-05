@@ -72,16 +72,26 @@ To use the genotype likelihoods in some analyses we had to have them in Beagle f
 
 ### Admixture analysis
 
-Converted `.log` output of ngsadmix with the script [ngsadmix_outparser.py](code/ngsadmix_outparser.py):
+Is performed with NGSadmix, provided in ANGSD, with script [11a_ngsadmix.sh](code/11a_ngsadmix.sh). I test K from 1 to 8 and each K is run 10 times to then select the best likelihood. The output files `.log` of ngsadmix are parsed to collect the likelihood of each run with the script [ngsadmix_outparser.py](code/ngsadmix_outparser.py):
 
 ```
 python code/ngsadmix_outparser.py -p data/raw/admixture
 ```
 
+The results are then analysed in R. with script [11b_ngsadmix.R](code/11b_ngsadmix.R).
+
+### Genomic PCA analysis
+
+
+### Genetic architecture prediction and GWAS
+
+
+### Divergence scan
 
 
 ## Software versions
 
+- ANGSD/0.933-111-g5859d2b (htslib: 1.11-113-g6038f97)
 - bwa/0.7.17
 - covtobed/1.2.0 https://github.com/telatin/covtobed
 - fastp/0.19.5
@@ -94,6 +104,7 @@ python code/ngsadmix_outparser.py -p data/raw/admixture
 - samtools/1.10
 - sratoolkit/2.10.7
 - trimmomatic/0.36
+- vcftools/0.1.15
 
 ### R libraries
 
