@@ -18,6 +18,8 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods.
 
+The figures showing the distribution of the phenotypes and the difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R).
+
 ## Pipeline
 
 ### Reads preparation
@@ -91,7 +93,7 @@ The results are then analysed in R. with script [11b_ngsadmix.R](code/11b_ngsadm
 These are performed with the software [GEMMA](https://github.com/genetics-statistics/GEMMA).
 
 The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh]
-(code/13a_gwas_genotype_formatting.sh), and to prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd).
+(code/13a_gwas_genotype_formatting.sh), and to prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions.
 
 In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](13b_gwas_phenotype_formatting.html).
 
