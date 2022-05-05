@@ -14,6 +14,9 @@ Library preparation and sequencing were performed by the [Next Generation Sequen
 
 Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA522653) and [PRJNA706535 (2018 batch)](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA706535).
 
+## Phenotype data
+
+The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods.
 
 ## Pipeline
 
@@ -56,7 +59,7 @@ Some numbers of mapped reads, duplicated reads, genome and gene space coverage a
 
 Performed with GATK v 4.1.3.0, following best practices. Since Petunia does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. 
 
-Variant calling performed with script [06_call_variants.sh](code/06_call_variants.sh). We then combined the g.vcf files with script [07_combine_gvcfs.sh](code/07_combine_gvcfs.sh). The genotype calling and variant quality evaluation is done with script [08_genotype_gvcfs_quality.sh](08_genotype_gvcfs_quality.sh). In this script we call an R script to plot the distribution of the quality values to verify that the hard filters proposed by GATK are appropriate. This is done with [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots which can be seen in [indel_quality.pdf](data/indel_quality.pdf) and [snp_quality.pdf](data/snp_quality.pdf).
+Variant calling performed with script [06_call_variants.sh](code/06_call_variants.sh). We then combined the g.vcf files with script [07_combine_gvcfs.sh](code/07_combine_gvcfs.sh). The genotype calling and variant quality evaluation is done with script [08_genotype_gvcfs_quality.sh](code/08_genotype_gvcfs_quality.sh). In this script we call an R script to plot the distribution of the quality values to verify that the hard filters proposed by GATK are appropriate. This is done with [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots which can be seen in [indel_quality.pdf](data/indel_quality.pdf) and [snp_quality.pdf](data/snp_quality.pdf).
 
 #### Variant filtering
 
@@ -85,6 +88,17 @@ The results are then analysed in R. with script [11b_ngsadmix.R](code/11b_ngsadm
 
 ### Genetic architecture prediction and GWAS
 
+These are performed with the software [GEMMA](https://github.com/genetics-statistics/GEMMA).
+
+The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh]
+(code/13a_gwas_genotype_formatting.sh), and to prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd).
+
+In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](13b_gwas_phenotype_formatting.html).
+
+I then use the genotype [hardfiltered_biallelic_cr09_mm005.bimbam.gz](data/hardfiltered_biallelic_cr09_mm005.bimbam.gz) and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
+
+
+
 
 ### Divergence scan
 
@@ -109,6 +123,9 @@ The results are then analysed in R. with script [11b_ngsadmix.R](code/11b_ngsadm
 ### R libraries
 
 - optparse https://cran.r-project.org/package=optparse
+- ggplot2
+- IRanges
+- GenomicRanges
 - 
 
 ## References
