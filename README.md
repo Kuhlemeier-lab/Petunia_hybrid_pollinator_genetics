@@ -95,7 +95,12 @@ These are performed with the software [GEMMA](https://github.com/genetics-statis
 The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh]
 (code/13a_gwas_genotype_formatting.sh), and to prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions.
 
-In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](13b_gwas_phenotype_formatting.html).
+In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](13b_gwas_phenotype_formatting.html). Each phenotypic trait is assigned an integer in order to be able to loop through them more easily in the analyses.
+
+1. Tube length
+2. Pistil length
+3. Flavonol content
+4. Anthocyanin content
 
 I then use the genotype [hardfiltered_biallelic_cr09_mm005.bimbam.gz](data/hardfiltered_biallelic_cr09_mm005.bimbam.gz) and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
 
