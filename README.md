@@ -99,7 +99,24 @@ In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also an
 
 I then use the genotype [hardfiltered_biallelic_cr09_mm005.bimbam.gz](data/hardfiltered_biallelic_cr09_mm005.bimbam.gz) and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
 
+Briefly, we first calculate the kinship matrix with GEMMA, using option `-gk 1` which calculates a centred relatedness matrix.
+We then do the association analyses for each of the four phenotypic traits considered (pistil and tube length, anthocyanin and flavonol content), applying first a linear model (LM) with option `-lm 4`, and then a linear mixed model (LMM) `-lmm 4` which includes a correction for relatedness.
+All of these analyses are performed with options `-hwe 0.001 -miss 0 -maf 0`.
 
+We then apply the bayesian sparse linear mixed model (BSLMM) to estimate the genetic architecture of each phenotypic trait. This is done with options:
+
+```
+-bslmm 1
+-hwe 0.001
+-maf 0
+-miss 0
+-w 50000000
+-s 200000000
+-rpace 1000
+-wpace 10000000
+```
+
+The output of all analyses is analysed in script [13d_gemma.Rmd](code/13d_gemma.Rmd).
 
 
 ### Divergence scan
@@ -112,6 +129,7 @@ I then use the genotype [hardfiltered_biallelic_cr09_mm005.bimbam.gz](data/hardf
 - covtobed/1.2.0 https://github.com/telatin/covtobed
 - fastp/0.19.5
 - fastqc/0.11.7
+- GEMMA/0.98.4
 - GenomeAnalysisTK/4.1.3.0
 - picard-tools/2.21.8
 - R on the computing cluster 3.4.2
@@ -124,13 +142,17 @@ I then use the genotype [hardfiltered_biallelic_cr09_mm005.bimbam.gz](data/hardf
 
 ### R libraries
 
-- optparse https://cran.r-project.org/package=optparse
+- corrplot
+- data.table
+- GenomicRanges
 - ggplot2
 - IRanges
-- GenomicRanges
+- optparse https://cran.r-project.org/package=optparse
+- reshape2
+- scales
 - 
 
 ## References
 
-Bombarely, Aureliano, Michel Moser, Avichai Amrad, Manzhu Bao, Laure Bapaume, Cornelius S. Barry, Mattijs Bliek, et al. 2016. ‘Insight into the Evolution of the Solanaceae from the Parental Genomes of Petunia Hybrida’. Nature Plants 2 (6): 16074. https://doi.org/10.1038/nplants.2016.74.
+Bombarely Aureliano, Michel Moser, Avichai Amrad, Manzhu Bao, Laure Bapaume, Cornelius S. Barry, Mattijs Bliek, et al. 2016. ‘Insight into the Evolution of the Solanaceae from the Parental Genomes of Petunia Hybrida’. Nature Plants 2 (6): 16074. https://doi.org/10.1038/nplants.2016.74.
 
