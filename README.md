@@ -116,7 +116,8 @@ We then apply the bayesian sparse linear mixed model (BSLMM) to estimate the gen
 -wpace 10000000
 ```
 
-The output of all analyses is analysed in script [13d_gemma.Rmd](code/13d_gemma.Rmd).
+The output of all analyses is analysed in script [13d_gemma.Rmd](code/13d_gemma.Rmd). In this script, part of the analysis of the BSLMM is adapted from a lecture of Victor Soria-Carrasco from the University of Sheffield. The complete tutorial can be found here:
+http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf
 
 
 ### Divergence scan
