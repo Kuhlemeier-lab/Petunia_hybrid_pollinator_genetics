@@ -85,6 +85,8 @@ python code/ngsadmix_outparser.py -p data/raw/admixture
 
 The results are then analysed in R. with script [11b_ngsadmix.R](code/11b_ngsadmix.R).
 
+In the R script we also produce a text file that holds the individual IDs of plants in each admixture group for K = 2, with groups defined as group 1 >= 0.75 and group 2 <= 0.25. The resulting file is later used to divide the variant file into two files one per admixture group.
+
 ### Genomic PCA analysis
 
 
