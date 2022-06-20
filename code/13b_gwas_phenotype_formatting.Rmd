@@ -1,0 +1,516 @@
+---
+title: "GEMMA association, natural hybrids"
+author: "Marta Binaghi"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document: 
+    number_sections: yes
+    toc: yes
+editor_options: 
+  chunk_output_type: inline
+---
+Created: Some time in June 2020
+Last modified: 19/05/2022
+
+# Preamble (setup and functions)
+
+```{r setup, warning = FALSE}
+library(data.table)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(corrplot)
+#library(pscl)
+knitr::opts_knit$set(root.dir = "/xxx/hybrids_peaxiINV/")
+knitr::opts_chunk$set(root.dir = "/xxx/hybrids_peaxiINV/")
+```
+
+# Introduction
+
+Observing distributions of phenotype data of the natural P. ax X P. ex hybrids.
+Formatting the phenotype data for GWAS with gemma.
+Observing correlations of phenotype with different variables.
+
+
+# Phenotype descriptive and correlations
+
+Phenotypes were loaded from the phenotype database that holds per plant mean of 
+the phenotypes. The additional information on plant IDs is taken from the reads
+sample ID file.
+
+
+```{r pheno_import}
+pheno_raw <- read.table("data/clean/phenotype_sequenced_individuals.csv",
+                        header = TRUE,
+                        sep = ",",
+                        stringsAsFactors = FALSE)
+# import plant IDs
+labels <- read.table("data/clean/reads_sample_ID.csv",
+                     sep = ",",
+                     header = TRUE,
+                     stringsAsFactors = FALSE)
+# add a batch column
+labels$batch <- 2018
+labels$batch[grepl("KMH", labels$sra_library_id)] <- 2016
+# remove extra lines that are repeated
+labels <- labels[labels$lane == 1, ]
+# labels have to be ordered as the beagle likelihood file.
+labels <- labels[order(labels$id_gl), ]
+
+pheno_raw$id_gl <- labels$id_gl[match(pheno_raw$new_id_short, labels$new_id_short)]
+```
+
+## Phenotype distibution is included in the phenotype analysis too
+
+I observe the distribution of the phenotypic traits with a qqplot.
+
+```{r pheno_qqplot, fig.height=3, fig.show="hold", fig.width=3, results=FALSE}
+pl <- function(){
+  qqnorm(pheno_raw$pist, pch = 1, frame = FALSE, main = "Pistil length")
+  qqline(pheno_raw$pist, col = "#e6002e", lwd = 2)
+  qqnorm((pheno_raw$D1), pch = 1, frame = FALSE, main ="D1 length")
+  qqline((pheno_raw$D1), col = "#e6002e", lwd = 2)
+  qqnorm((pheno_raw$D2), pch = 1, frame = FALSE, main = "D2 length")
+  qqline((pheno_raw$D2), col = "#e6002e", lwd = 2)
+  qqnorm((pheno_raw$Dsum), pch = 1, frame = FALSE, main = "Tube length (D1+D2)")
+  qqline((pheno_raw$Dsum), col = "#e6002e", lwd = 2)
+  qqnorm((pheno_raw$flav), pch = 1, frame = FALSE, main = "Flavonols")
+  qqline((pheno_raw$flav), col = "#e6002e", lwd = 2)
+  qqnorm((pheno_raw$antho), pch = 1, frame = FALSE, main = "Anthocyanins")
+  qqline((pheno_raw$antho), col = "#e6002e", lwd = 2)
+}
+pdf("figures/exploratory/gwas/plot_qq_pheno_morpho_gwas.pdf",
+    width = 9, height = 6)
+par(mfrow = c(2,  3))
+pl()
+dev.off()
+pl()
+
+```
+
+The morphological traits appear normally distributed. The colour-related traits
+(flavonols and anthocyanins) appear not. 
+
+```{r normality test}
+phenos <- c("antho", "flav", "Dsum", "pist")
+# output file
+outfile <- "data/clean/phenotype_normality.txt"
+for (i in phenos) {
+  cat("####    ####",
+      file = outfile,
+      append = TRUE,
+      sep = "\n")
+  cat(i,
+      file = outfile,
+      append = TRUE,
+      sep = "\n")
+  capture.output(shapiro.test(pheno_raw[ , i]),
+                 file = outfile,
+                 append = TRUE)
+}
+```
+
+Indeed, the flavonol and anthocyanin are non normally distributed.
+They are rank-transformed.
+
+```{r rank_pheno}
+pheno_raw$flav_rank <- rank(pheno_raw$flav, na.last = "keep")
+pheno_raw$antho_rank <- rank(pheno_raw$antho, na.last = "keep")
+```
+
+## Phenotype correlation to phenotype
+
+Phenotype to phenotype correlations were tested with Pearson's correlation.
+Here, I calculate the correlation between pairs of phenotypic traits using Pearson's
+correlation. I then apply a Bonferroni correction for multiple testing.
+A correlation matrix showing the Bonferroni-corrected significance is produced.
+
+```{r pheno_corr_pheno}
+# #make a column with the location, by extracting it from the original_id
+# pheno_raw$location <- gsub(pattern = "(\\w+)_\\d+-\\d+",
+#      replacement = "\\1",
+#      x = pheno_raw$original_id,
+#      perl = TRUE)
+
+# list the variables that I want to have in the correlation matrix
+pheno_rawtypes <- c("Dsum", "pist", "flav_rank", "antho_rank")
+# make one matrix to keep the correlation estimate value
+estimates_mt <- matrix(data = 999, nrow = length(pheno_rawtypes), ncol = length(pheno_rawtypes))
+# and one to keep the corresponding P values
+pvals_mt <- matrix(data = 999, nrow = length(pheno_rawtypes), ncol = length(pheno_rawtypes))
+
+# loop through the pheno_rawtypes and calculate their correlation with each other
+for ( thispheno_raw in pheno_rawtypes ) {
+  test <- apply(X = pheno_raw[ , colnames(pheno_raw) %in% pheno_rawtypes], 
+                MARGIN = 2, 
+                function(x) cor.test(pheno_raw[ , thispheno_raw], x))
+  estimates <- sapply(test, "[[", "estimate")
+  pvals <- sapply(test, "[[", "p.value")
+  estimates_mt[match(thispheno_raw, pheno_rawtypes), ] <- estimates
+  pvals_mt[match(thispheno_raw, pheno_rawtypes), ] <- pvals
+}
+# name rows and cols of the matrices
+colnames(estimates_mt) <- pheno_rawtypes
+rownames(estimates_mt) <- pheno_rawtypes
+colnames(pvals_mt) <- pheno_rawtypes
+rownames(pvals_mt) <- pheno_rawtypes
+
+# apply Bonferroni correction to the P values by multiplying the P values
+# by the number of comparisons performed
+pvals_bonf_mt <- pvals_mt * ( length(pheno_rawtypes)**2 )
+
+# recode the corrected P values into classes (> 0.05, 0.01-0.05, 0-0.01)
+pvals_bonf_class_mt <- pvals_bonf_mt
+# recode the classes so they map to meaningful colours in the correlation plot
+pvals_bonf_class_mt[pvals_bonf_class_mt >= 0 & pvals_bonf_class_mt < 0.01] <- -1
+pvals_bonf_class_mt[pvals_bonf_class_mt >= 0.01 & pvals_bonf_class_mt < 0.05] <- 0
+pvals_bonf_class_mt[pvals_bonf_class_mt >= 0.05] <- 1
+# make NA the diagonal to avoid plotting self values
+diag(pvals_bonf_class_mt) <- NA
+# palette
+colP <- colorRampPalette(c("#4BA640", "#7ACD70", "#C3C5C3")) 
+pl <- function(){
+  corrplot(estimates_mt, type = "upper", order = "original",
+         tl.col = "black", tl.srt = 45,
+         tl.pos = "tl",
+         method = "color",
+         addgrid.col = "white",
+         diag = TRUE)
+  corrplot(pvals_bonf_class_mt, add = TRUE,
+         type = "lower", order = "original",
+         tl.col = "black", tl.pos = "n",
+         method = "color",
+         col = colP(10),
+         addgrid.col = "white",
+         na.label = " ",
+         cl.pos = "n")
+}
+pdf("figures/exploratory/phenotype/correlogram.pdf", width = 9, height = 9)
+pl()
+dev.off()
+pl()
+```
+
+In the correlogram, the lower triangle shows the Bonferroni-corrected significance:
+
+* grey: not significant
+* light green: lower than 0.05
+* dark green: lower than 0.01
+
+I save the correlation results to a csv file.
+
+```{r save_phenopheno_corr}
+# save the results to a readable csv
+estimates_mt.long <- melt(estimates_mt)
+pvals_mt.long <- melt(pvals_mt)
+pvals_bonf_mt.long <- melt(pvals_bonf_mt)
+corr_pheno_rawpheno_raw <- merge.data.frame(estimates_mt.long, pvals_mt.long, by = c("Var1", "Var2"))
+corr_pheno_rawpheno_raw <- merge.data.frame(corr_pheno_rawpheno_raw, pvals_bonf_mt.long, by = c("Var1", "Var2"))
+colnames(corr_pheno_rawpheno_raw) <- c("Variable1", "Variable2", "Pearson_r2", "Pvalue", "Bonferroni_Pvalue")
+write.csv(x = corr_pheno_rawpheno_raw, 
+          file = "data/raw/phenotype/correlation_phenoToPheno.csv", 
+          quote = FALSE, 
+          row.names = FALSE)
+
+rm(estimates_mt, 
+   estimates_mt.long, 
+   pvals_bonf_class_mt, 
+   pvals_bonf_mt, 
+   pvals_bonf_mt.long, 
+   pvals_mt, 
+   pvals_mt.long, 
+   test,
+   thispheno_raw,
+   pvals,
+   estimates,
+   colP)
+
+```
+
+## Phenotype correlation to principal components
+
+I test phenotype correlation to the first 10 genomic principal components.
+
+```{r pheno_corr_PC}
+# import PCA data
+covmat <- read.table("data/raw/pca/cr09_mm005.cov")
+# the eigen vector of the covariance matrix:
+e <- eigen(covmat)
+# the variance explained by each PC:
+PCperc <- round(e$values/sum(e$values) * 100, digits = 2)
+PCperc[1:10]
+
+# take first 10 PCs
+pcs1.10 <- e$vectors[, 1:10]
+# sort pheno df as the PCA
+pheno_raw <- pheno_raw[order(pheno_raw$id_gl), ]
+
+# list the variables that I want to have in the correlation matrix
+phenotypes <- c("Dsum", "pist", 
+                "flav", "antho")
+
+# make one matrix to keep the correlation estimate value
+estimates_mt <- matrix(data = 999, nrow = length(phenotypes), ncol = 10)
+# and one to keep the corresponding P values
+pvals_mt <- matrix(data = 999, nrow = length(phenotypes), ncol = 10)
+
+# loop through the phenotypes and calculate their correlation with each PC
+for ( thispheno in phenotypes ) {
+  test <- apply(X = pcs1.10, 
+                MARGIN = 2, 
+                function(x) cor.test(as.numeric(pheno_raw[ , thispheno]), x))
+  estimates <- sapply(test, "[[", "estimate")
+  pvals <- sapply(test, "[[", "p.value")
+  estimates_mt[match(thispheno, phenotypes), ] <- estimates
+  pvals_mt[match(thispheno, phenotypes), ] <- pvals
+}
+# name rows and cols of the matrices
+colnames(estimates_mt) <- paste0("PC", 1:10)
+rownames(estimates_mt) <- phenotypes
+colnames(pvals_mt) <- paste0("PC", 1:10)
+rownames(pvals_mt) <- phenotypes
+
+# apply Bonferroni correction to the P values by multiplying the P values
+# by the number of comparisons performed
+pvals_bonf_mt <- pvals_mt * ( length(phenotypes) * 10 )
+
+# make the matrices into a long df
+estimates_mt.long <- melt(estimates_mt)
+pvals_mt.long <- melt(pvals_mt)
+pvals_bonf_mt.long <- melt(pvals_bonf_mt)
+corr_PCpheno <- merge.data.frame(estimates_mt.long, pvals_mt.long, by = c("Var1", "Var2"))
+corr_PCpheno <- merge.data.frame(corr_PCpheno, pvals_bonf_mt.long, by = c("Var1", "Var2"))
+colnames(corr_PCpheno) <- c("Variable1", "Variable2", "Pearson_r2", "Pvalue", "Bonferroni_Pvalue")
+
+# add a column to code significance of Bonferroni corrected P values
+corr_PCpheno$bonf_signif <- "na"
+corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue < 0.01] <- "**"
+corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue < 0.05 &
+                           corr_PCpheno$Bonferroni_Pvalue >= 0.01 ] <- "*"
+corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue >= 0.05] <- "n.s."
+
+pl <- ggplot(data = corr_PCpheno,
+       aes(Variable1, Variable2)) +
+  geom_tile(aes(fill = Pearson_r2),
+            colour = "white") +        # adds the thin white line bw cells
+  scale_fill_gradient2(low = "red", mid = "white", high = "blue") +
+  geom_text(aes(label = bonf_signif)) +
+  xlab("Phenotypic trait") +
+  ylab("PC component") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) 
+ggsave("figures/exploratory/phenotype/correlogram_PCTopheno.png",
+       plot = pl,
+       width = 8, height = 5)
+pl
+
+# save the results to a readable csv
+write.csv(x = corr_PCpheno, 
+          file = "data/raw/phenotype/correlation_PCPheno.csv", 
+          quote = FALSE, 
+          row.names = FALSE)
+
+rm(estimates_mt, 
+   estimates_mt.long, 
+   pvals_bonf_mt, 
+   pvals_bonf_mt.long, 
+   pvals_mt, 
+   pvals_mt.long, 
+   test,
+   thispheno,
+   pvals,
+   estimates)
+
+print("which correlates significantly?")
+corr_PCpheno[corr_PCpheno$Bonferroni_Pvalue < 0.05, ]
+```
+
+
+Significantly correlated phenotypes are plotted only to file.
+
+
+```{r plot_pheno_pc_corr}
+# plot them
+for (thispheno in corr_PCpheno$Variable1[corr_PCpheno$Bonferroni_Pvalue < 0.05]) {
+  for (pc in corr_PCpheno$Variable2[corr_PCpheno$Bonferroni_Pvalue < 0.05 & 
+                                    corr_PCpheno$Variable1 == thispheno]) {
+    r_label <- paste0("r^2 = ", round(corr_PCpheno$Pearson_r2[corr_PCpheno$Variable1 == thispheno &
+                                                        corr_PCpheno$Variable2 == pc],
+                                      digits = 2))
+    p_label <- paste0("P = ", corr_PCpheno$Bonferroni_Pvalue[corr_PCpheno$Variable1 == thispheno &
+                                                               corr_PCpheno$Variable2 == pc])
+    pc_idx <- as.integer(gsub("PC", "", pc))
+    if ( thispheno == "uv_bin" ) {
+      ggplot(data = pheno_raw,
+             aes(x = pcs1.10[ , pc_idx],
+                 y = uv_bin)) +
+        geom_boxplot() +
+        geom_point(aes(group = uv_bin, fill = uv_bin),
+                   position = position_jitterdodge(0.80),
+                   alpha = 0.5) +
+        xlab(pc) +
+        ylab("UV phenotype") +
+        theme_classic() +
+        annotate(geom = "text", x = Inf, y = 3, label = r_label,
+                 vjust = 1, hjust = 3) +
+        annotate(geom = "text", x = Inf, y = 3, label = p_label,
+                 vjust = 3, hjust = 1)
+      ggsave(paste0("figures/exploratory/phenotype/scatter_", pc, "_", thispheno, "_correl.png"),
+             width = 5, height = 5)
+    } else {
+      ggplot(data = pheno_raw,
+             aes(x = pcs1.10[ , pc_idx],
+                 y = get(thispheno))) +
+        geom_point() +
+        geom_smooth(method = "lm", formula = y ~ x,
+                    se = FALSE,
+                    col = "gray",
+                    linetype = "dashed") +
+        xlab(pc) +
+        ylab(thispheno) +
+        theme_classic() +
+        annotate(geom = "text", x = Inf, y = Inf, label = r_label,
+                 vjust = 1, hjust = 3) +
+        annotate(geom = "text", x = Inf, y = Inf, label = p_label,
+                 vjust = 3, hjust = 1)
+      ggsave(paste0("figures/exploratory/phenotype/scatter_", pc, "_", thispheno, "_correl.png"),
+             width = 5, height = 5)
+    }
+  }
+}
+```
+
+## Phenotypic variance explained by each PC
+
+As in Migicowski, I calculate the phenotypic variance explained by each PC
+as the correlation between the phenotype and each PC.
+
+```{r pheno_variance}
+phenotypes <- c("Dsum", "pist", 
+                "flav", "antho")
+
+# initialise empty df
+variance <- data.frame(phenotype = rep(phenotypes, each = 10),
+                       pc = 1:10,
+                       r2 = NA)
+
+# calculate r^2 using a linear regression for all phenotypes
+# for UV binary I use McFadden's pseudo-R2 on a logistic regression
+
+for ( thispheno in phenotypes ) {
+  for ( thispc in 1:10 ) {
+    if ( thispheno == "uv_bin" ) {
+      glm.fit <- glm(pheno_raw$uv_bin ~ pcs1.10[ , thispc], family = "binomial")
+      mcf <- pR2(glm.fit)["McFadden"]
+      variance$r2[variance$phenotype == thispheno &
+                    variance$pc == thispc] <- mcf
+    } else {
+      lm.fit <- lm(pheno_raw[ , thispheno] ~ pcs1.10[ , thispc])
+      variance$r2[variance$phenotype == thispheno &
+                    variance$pc == thispc] <- summary(lm.fit)$r.squared
+    }
+  }
+}
+
+# plot
+variance$pc <- as.factor(variance$pc)
+pl <- ggplot(variance,
+       aes(x = phenotype,
+           y = r2,
+           fill = pc)) +
+  geom_bar(position = position_stack(reverse = TRUE),
+           stat = "identity") +
+  scale_fill_brewer(palette = "Set3") +
+  ylim(c(0, 1)) +
+  coord_flip() +
+  theme_classic()
+ggsave("figures/exploratory/phenotype/variance_per_PC.png",
+       plot = pl,
+       width = 9, height = 6)
+pl
+
+# save data to a csv
+write.csv(variance,
+          file = "data/raw/phenotype/phenotypic_variance_by_PC.csv", 
+          quote = FALSE, 
+          row.names = FALSE)
+
+```
+
+
+## Correlation admixture location
+
+I also test if a correlation between admixture and location exists.
+
+```{r corr_adm_loc}
+# import admixture data
+adm <-read.csv(file = "data/raw/admixture/q2_admixture.csv",
+         sep = ",",
+         header = TRUE,
+          stringsAsFactors = FALSE)
+pheno_raw$Q2.1 <- adm$Q2.1[match(pheno_raw$new_id_short, adm$id)]
+
+# get location infor from sample name
+pheno_raw$location <- "Pedra da Cruz"
+pheno_raw$location[grepl("ponto", pheno_raw$original_id)] <- "Ponto 143"
+
+corr_admLoc <- wilcox.test(pheno_raw$Q2.1 ~ pheno_raw$location)
+# plot
+pl <- ggplot(data = pheno_raw[ , c("Q2.1", "location")],
+       aes(x = location,
+           y = Q2.1)) +
+  geom_boxplot() +
+  geom_point(aes(group = location, fill = location),
+             position = position_jitterdodge(0.80),
+             alpha = 0.5) +
+  ylab("Admixture proportion") +
+  theme_classic() +
+  annotate(geom = "text", x = 1.5, y = 1.1, label = "P = 0.04") +
+  annotate(geom = "text", x = 1.5, y = 1, label = paste0("W = ", corr_admLoc$statistic))
+ggsave("figures/exploratory/phenotype/boxplot_correlation_admloc.png", 
+       plot = pl,
+       width = 4,
+       height = 5)
+pl
+```
+
+# Phenotype formatting for GEMMA
+
+## Phenotype file format
+
+Phenotype values were formatted and saved to be used in GEMMA. GEMMA handles
+BIMBAM phenotype files, but can read single columns from a file with several
+phenotype columns (space-separated). Phenotype has to be numeric, 
+and each line is an individual
+in the same order as in the genotype BIMBAM file (shown in the file 
+`data/raw/gwas/hardfiltered_biallelic_cr09_mm005.bimbam.ids.txt`).
+
+The resulting phenotype file `pheno_morpho.bimbam` includes in this order:
+
+* Dsum (tube length)
+* Pistil length
+* Flavonols rank transformed
+* Anthocyanins rank transformed
+
+
+```{r pheno_format}
+# read order of IDs
+id_order <- read.table("data/raw/variants/hardfiltered_biallelic_cr09_mm005.bimbam.ids.txt",
+                       header = FALSE)
+# sort pheno_raw into id_order
+pheno_sorted <- pheno_raw[match(id_order$V1, pheno_raw$new_id_short), ]
+# get relevant columns (= phenotypes)
+pheno_gwas <- as.data.frame(cbind(pheno_sorted$Dsum,
+                    pheno_sorted$pist))
+colnames(pheno_gwas) <- c("Dsum", "pist")
+# rank transform
+pheno_gwas$flav.rank <- rank(pheno_sorted$flav_rank, na.last = "keep")
+pheno_gwas$antho.rank <- rank(pheno_sorted$antho_rank, na.last = "keep")
+# save phenotype to file
+write.table(pheno_gwas,
+            file = "data/raw/gwas/pheno_gwas.bimbam",
+            sep = " ",
+            quote = FALSE,
+            row.names = FALSE,
+            col.names = FALSE)
+```
