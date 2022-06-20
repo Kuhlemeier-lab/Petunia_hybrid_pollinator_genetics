@@ -18,7 +18,7 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods.
 
-The figures showing the distribution of the phenotypes and the difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R).
+The figures showing the distribution of the phenotypes and the difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R). The same script also performs a normality test.
 
 ## Pipeline
 
@@ -89,13 +89,19 @@ In the R script we also produce a text file that holds the individual IDs of pla
 
 ### Genomic PCA analysis
 
+Is performed with pcangsd version 1.10, using `--minMaf 0` and one thread. Script is [12a_pcangsd.sh](code/12a_pcangsd.sh).
+
+The results are analysed and plotted with the Rmd script [12b_pcangsd.Rmd](code/12b_pcangsd.Rmd), for which the output is available in [12b_pcangsd.html](code/12b_pcangsd.html).
+
 
 ### Genetic architecture prediction and GWAS
 
 These are performed with the software [GEMMA](https://github.com/genetics-statistics/GEMMA).
 
 The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh]
-(code/13a_gwas_genotype_formatting.sh), and to prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions.
+(code/13a_gwas_genotype_formatting.sh) which uses the script [bcf2bbgeno_edit.pl](code/bcf2bbgeno_edit.pl) to convert the vcf into a bimbam format file.
+
+To prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions. The output of the R markdown in available in [13b_gwas_phenotype_formatting.Rmd](code/13b_gwas_phenotype_formatting.Rmd).
 
 In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](13b_gwas_phenotype_formatting.html). Each phenotypic trait is assigned an integer in order to be able to loop through them more easily in the analyses.
 
@@ -104,7 +110,7 @@ In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also an
 3. Flavonol content
 4. Anthocyanin content
 
-I then use the genotype [hardfiltered_biallelic_cr09_mm005.bimbam.gz](data/hardfiltered_biallelic_cr09_mm005.bimbam.gz) and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
+I then use the genotype hardfiltered_biallelic_cr09_mm005.bimbam.gz and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
 
 Briefly, we first calculate the kinship matrix with GEMMA, using option `-gk 1` which calculates a centred relatedness matrix.
 We then do the association analyses for each of the four phenotypic traits considered (pistil and tube length, anthocyanin and flavonol content), applying first a linear model (LM) with option `-lm 4`, and then a linear mixed model (LMM) `-lmm 4` which includes a correction for relatedness.
@@ -126,8 +132,28 @@ We then apply the bayesian sparse linear mixed model (BSLMM) to estimate the gen
 The output of all analyses is analysed in script [13d_gemma.Rmd](code/13d_gemma.Rmd). In this script, part of the analysis of the BSLMM is adapted from a lecture of Victor Soria-Carrasco from the University of Sheffield. The complete tutorial can be found here:
 http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf
 
+The script also uses some functions from a file that is sourced at the beginning of the Rmd, it's [13_gwas_functions.R](code/13_gwas_functions.R).
+
+The output is [13d_gemma.html](code/13d_gemma.html).
+
+The plots displayed in the publication are obtained with script [13e_plot_gwas.R](code/13e_plot_gwas.R).
+
 
 ### Divergence scan
+
+Is done by calculating a sliding window Fst with ANGSD, with script [14a_divergence.sh](code/14a_divergence.sh). Note that doSaf in multithreading seems to mix up positions between chromosomes, see issue in (https://github.com/ANGSD/angsd/issues/258), so I use only one thread.
+
+Briefly, to calculate Fst with ANGSD I divide the vcf files into two files with the individuals with admixture < 0.25 and one with > 0.75. I then do `-doSaf 1` and use realSFS to get the 2D sfs prior.  I then use realSFS to calculate the Fst and then use again realSFS to summarise by window.
+
+The results are then plotted with [14b_divergence.R](14b_divergence.R).
+
+
+
+### Overlap test
+
+To check if the regions identified as outliers in the GWAS and in the Fst scan overlap I use the R library [regioneR](https://doi.org/doi:10.18129/B9.bioc.regioneR). The analysis is performed with script [15_overlap_permutation.R](code/15_overlap_permutation.R).
+
+The library permits to provide a genome index file, and regions in two groups for which to check overlap. The library performs a permutation and tells if the regions in the two groups overlap more than expected by chance.
 
 
 ## Software versions
@@ -139,6 +165,7 @@ http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/201
 - fastqc/0.11.7
 - GEMMA/0.98.4
 - GenomeAnalysisTK/4.1.3.0
+- pcangsd v 1.10
 - picard-tools/2.21.8
 - R on the computing cluster 3.4.2
 - R on the local machine 3.3.3
@@ -152,10 +179,14 @@ http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/201
 
 - corrplot
 - data.table
+- dplyr
 - GenomicRanges
 - ggplot2
+- Hmisc
 - IRanges
 - optparse https://cran.r-project.org/package=optparse
+- RColorBrewer
+- regioneR
 - reshape2
 - scales
 - 
