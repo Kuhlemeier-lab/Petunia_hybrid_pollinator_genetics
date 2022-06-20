@@ -1,0 +1,318 @@
+---
+title: "PCA plots, natural hybrids"
+author: "Marta Binaghi"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document: default
+---
+
+Last modified 19/05/2022
+
+```{r setup, warning = FALSE}
+library(RcppCNPy)
+library(calibrate)
+library(scales)
+
+knitr::opts_knit$set(root.dir = "/xxx/hybrids_peaxiINV/")
+knitr::opts_chunk$set(root.dir = "/xxx/hybrids_peaxiINV/")
+
+```
+
+This script uses as input the file produced with PCAngsd ```12a_pcangsd.sh```.
+
+```{r import_id}
+# import plant IDs     --------------------------------------
+labels <- read.table("data/clean/reads_sample_ID.csv",
+                     sep = ",",
+                     header = TRUE,
+                     stringsAsFactors = FALSE)
+# add a batch column
+labels$batch <- 2018
+labels$batch[grepl("KMH", labels$sra_library_id)] <- 2016
+# remove extra lines that are repeated
+labels <- labels[labels$lane == 1, ]
+# labels have to be ordered as the beagle likelihood file.
+labels <- labels[order(labels$id_gl), ]
+# add label to show group resulting from admixture analysis, for K =2
+ks <- read.csv("data/raw/admixture/q2_admixture.csv",
+               header = TRUE,
+               stringsAsFactors = FALSE)
+# merge dataframes to have them sorted correctly
+labels <- subset(labels, select = c("plant", "new_id_short", "id_gl", "location", "parental_id", "batch"))
+labq <- merge.data.frame(labels,
+                         ks, by = "id_gl")
+# sort by gl_id for consistency with PCAngsd output
+labq <- labq[order(labq$id_gl), ]
+
+# import PCA data -------------------------------------------------------------
+covmat <- read.table("data/raw/pca/cr09_mm005.cov")
+# the eigen vector of the covariance matrix:
+e <- eigen(covmat)
+```
+
+Each PC explains:
+```{r PCs}
+# the variance explained by each PC:
+PCperc <- round(e$values/sum(e$values) * 100, digits = 2)
+PCperc
+```
+
+I made several plots to show the samples in the PC plot.
+I compare the PC1 with PC2.
+```{r pcsets}
+pcs1.2 <- e$vectors[, 1:2]
+# and the PC1 with PC3
+pcs1.3 <- cbind(e$vectors[ , 1],
+                e$vectors[ , 3])
+```
+
+A basic plot with the individual ID:
+```{r plotid}
+# base_plot_ids, PC1, 2 and 3
+# PC1 and 2
+pl <- function(){plot(pcs1.2,
+     pch = NA,
+     cex = 1,
+     #col = as.factor(labels$batch),
+     #col = labq$colours,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 2 (",
+                   PCperc[2], " %)"),
+     main = "Principal component analysis (PCA)")
+text(pcs1.2[ , 2] ~ pcs1.2[ , 1], labels = labq$id, cex = 0.6)
+# PC1 and 3
+plot(pcs1.3,
+     pch = NA,
+     cex = 1,
+     #col = as.factor(labels$batch),
+     #col = labq$colours,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 3 (",
+                   PCperc[3], " %)"),
+     main = "Principal component analysis (PCA)")
+text(pcs1.3[, 2] ~ pcs1.3[, 1], labels = labq$id, cex = 0.6)
+}
+pdf("figures/exploratory/pca/pca_1and2_1and3_id.pdf",
+    width = 12, height = 6)
+par(mfrow = c(1,  2))
+pl()
+dev.off()
+pl()
+```
+
+A plot with the admixture for K = 2:
+```{r plotadm}
+# plot with K groups (admixture)
+mypal <- rev(c('#e6002e', '#e2342c', '#dd4937', '#d95a44', '#d36852', '#cc7561', '#c58171', '#bb8d81', '#b09891', '#a2a2a2'))
+mypalAlpha = alpha(mypal, 1)
+labq$Qcolours <- as.character(NA)
+labq$Qcolours[labq$Q2.1 < 0.1] <- mypalAlpha[1]
+labq$Qcolours[labq$Q2.1 >= 0.1 & labq$Q2.1 < 0.2] <- mypalAlpha[2]
+labq$Qcolours[labq$Q2.1 >= 0.2 & labq$Q2.1 < 0.3] <- mypalAlpha[3]
+labq$Qcolours[labq$Q2.1 >= 0.3 & labq$Q2.1 < 0.4] <- mypalAlpha[4]
+labq$Qcolours[labq$Q2.1 >= 0.4 & labq$Q2.1 < 0.5] <- mypalAlpha[5]
+labq$Qcolours[labq$Q2.1 >= 0.5 & labq$Q2.1 < 0.6] <- mypalAlpha[6]
+labq$Qcolours[labq$Q2.1 >= 0.6 & labq$Q2.1 < 0.7] <- mypalAlpha[7]
+labq$Qcolours[labq$Q2.1 >= 0.7 & labq$Q2.1 < 0.8] <- mypalAlpha[8]
+labq$Qcolours[labq$Q2.1 >= 0.8 & labq$Q2.1 < 0.9] <- mypalAlpha[9]
+labq$Qcolours[labq$Q2.1 >= 0.9] <- mypalAlpha[10]
+
+pl <- function(){plot(pcs1.2,
+     pch = c(16, 17)[as.factor(labq$q2_group)],
+     cex = 1,
+     col = labq$Qcolours,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 2 (",
+                   PCperc[2], " %)"))
+legend(0.22, -0.1,
+       c("1", "2"),
+       pch = c(16, 17),
+       cex = 0.8,
+       title = "Group",
+       bty = "n")
+legend(0.2, 0.25,
+       legend = c("0-0.1",
+                  "0.1-0.2",
+                  "0.2-0.3",
+                  "0.3-0.4",
+                  "0.4-0.5",
+                  "0.5-0.6",
+                  "0.6-0.7",
+                  "0.7-0.8",
+                  "0.8-0.9",
+                  "0.9-1"),
+       fill = mypalAlpha,
+       cex = 0.8,
+       bty = "n",
+       text.col = "black",
+       title = "Ancestry proportion",
+       title.col = "black",
+       horiz = F)
+plot(pcs1.3,
+     pch = c(16, 17)[as.factor(labq$q2_group)],
+     cex = 1,
+     col = labq$Qcolours,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 3 (",
+                   PCperc[3], " %)"))
+}
+pdf("figures/exploratory/pca/pca_1and2_1and3_qmatrix.pdf",
+    width = 13, height = 6)
+par(xpd = T, mar = par()$mar + c(0,0,0,4.5),
+    mfrow = c(1, 2))
+pl()
+dev.off()
+pl()
+```
+
+Plot with parental IDs:
+
+```{r plotparental}
+pl <- function(){plot(pcs1.2,
+     pch = 16,
+     cex = 1,
+     col = as.factor(labq$parental),
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 2 (",
+                   PCperc[2], " %)"),
+     main = "PC 1 and 2")
+textxy(pcs1.2[, 1],
+       pcs1.2[, 2],
+       as.character(labq$parental),
+       cex = 0.7)
+plot(pcs1.3,
+     pch = 16,
+     cex = 1,
+     col = as.factor(labq$parental),
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 3 (",
+                   PCperc[3], " %)"),
+     main = "PC 1 and 3")
+textxy(pcs1.3[, 1],
+       pcs1.3[, 2],
+       as.character(labq$parental),
+       cex = 0.7)
+}
+pdf("figures/exploratory/pca/pca_1and2_1and3_parentals.pdf",
+    width = 12, height = 6)
+par(mfrow = c(1, 2))
+pl()
+dev.off()
+pl()
+```
+
+Plot with location:
+
+```{r plotloc}
+# plot by location
+pl <- function(){plot(pcs1.2,
+     pch = c(16, 17)[as.factor(labq$location.x)],
+     cex = 1,
+     col = c("#d8b365", "#5ab4ac")[as.factor(labq$location.x)],
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 2 (",
+                   PCperc[2], " %)"))
+legend(0.2, 0.22,
+       c("Pedra da Cruz", "Ponto143"),
+       col = c("#d8b365", "#5ab4ac"),
+       pch = c(16, 17),
+       cex = 0.8,
+       title = "Location",
+       bty = "n")
+plot(pcs1.3,
+     pch = c(16, 17)[as.factor(labq$location.x)],
+     cex = 1,
+     col = c("#d8b365", "#5ab4ac")[as.factor(labq$location.x)],
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 3 (",
+                   PCperc[3], " %)"))
+}
+pdf("figures/exploratory/pca/pca_1and2_1and3_location.pdf",
+    width = 12, height = 6)
+par(xpd = T, mar = par()$mar + c(0,0,0,4),
+    mfrow = c(1, 2))
+pl()
+dev.off()
+pl()
+```
+
+
+Plot with phenotype.
+
+```{r plotpheno}
+# import phenotype data
+pheno <- read.table("data/clean/phenotype_sequenced_individuals.csv",
+                    sep = ",",
+                    header = TRUE,
+                    stringsAsFactors = FALSE)
+# order them as the PCA df
+pheno <- pheno[match(labq$new_id_short, pheno$new_id_short), ]
+
+# plot flower colour and UV and pistil tube ratio
+flColourPalette = c('dusty red'='#ffa500', 
+                    'dark pink/red'='#cc3278',
+                    'pale pink'='#eea2ae', 
+                    'pink'='#ff33b3', 
+                    'purple'='#7d26cd', 
+                    'red'='#ef0001', 
+                    'white'='#9e9e9e' 
+)
+flColourPaletteAlpha <- alpha(flColourPalette, 0.5)
+names(flColourPaletteAlpha) <- names(flColourPalette)
+plantColour <- flColourPaletteAlpha[match(pheno$colour, names(flColourPaletteAlpha))]
+plantUV <- c(16, 17)[match(pheno$uv, c("a", "r"))]
+
+pl <- function(){plot(pcs1.2,
+     pch = plantUV,
+     cex = 1,
+     col = plantColour,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 2 (",
+                   PCperc[2], " %)"),
+     main = "PC 1 and 2")
+legend(0.2, 0.27,
+       c("Absorbant", "Reflective"),
+       pch = c(16, 17),
+       cex = 1,
+       title = "UV",
+       bty = "n")
+legend(0.2, 0.15,
+       names(flColourPalette),
+       col = flColourPalette,
+       pch = 15,
+       cex = 1,
+       title = "Colour",
+       bty = "n")
+plot(pcs1.3,
+     pch = plantUV,
+     cex = 1,
+     col = plantColour,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 3 (",
+                   PCperc[3], " %)"),
+     main = "PC 1 and 3")
+}
+pdf("figures/exploratory/pca/pca_1and2_1and3_pheno.pdf",
+    width = 13, height = 6)
+par(xpd = T, mar = par()$mar + c(0,0,0,5),
+    mfrow = c(1, 2))
+pl()
+dev.off()
+pl()
+```
+
+Package versions
+
+```{r session}
+sessionInfo()
+```
