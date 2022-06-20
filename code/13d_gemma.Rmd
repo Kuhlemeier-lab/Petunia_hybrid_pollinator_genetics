@@ -1,0 +1,614 @@
+---
+title: "GEMMA association, natural hybrids"
+author: "Marta Binaghi"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document: 
+    number_sections: yes
+    toc: yes
+editor_options: 
+  chunk_output_type: inline
+---
+Created: Some time in June 2020
+Last modified: 09/05/2022
+
+Part of the code has been adapted from the lecture of Victor Soria-Carrasco from
+the University of Sheffield. The tutorial can be found here:
+http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf
+
+# Preamble (setup and functions)
+
+```{r setup, warning = FALSE}
+library(data.table)
+library(ggplot2)
+library(scales)
+
+knitr::opts_knit$set(root.dir = "/xxx/hybrids_peaxiINV/")
+knitr::opts_chunk$set(root.dir = "/xxx/hybrids_peaxiINV/")
+source("code/13_gwas_functions.R")
+```
+
+# Introduction
+
+In this file I analyse the results of the GEMMA association analysis and BSLMM 
+performed on the traits of the P. axillaris - P. exserta natural hybrid
+population.
+
+## Order of individual IDs in GEMMA
+
+We import the ID order of the GEMMA files and the phenotype data in order to
+have the information on the individuals.
+
+```{r indiv_order}
+# read order of IDs
+id_order <- read.table("data/raw/variants/hardfiltered_biallelic_cr09_mm005.bimbam.ids.txt",
+                       header = FALSE)
+pheno_raw <- read.table("data/clean/phenotype_sequenced_individuals.csv",
+                        header = TRUE,
+                        sep = ",",
+                        stringsAsFactors = FALSE)
+```
+
+## Relatedness matrix
+
+### Kinship
+
+I first build a relatedness matrix using option `-gk 1` which builds a 
+centred matrix, suitable for phenotypes whose causal SNP effect size does not 
+depend on its MAF. Notice that to build the matrix I have to supply the
+phenotype file. The file is used to check for missing phenotype data,
+apparently.
+
+The relatedness matrix is imported:
+
+```{r import_relatedness}
+k_m <- read.table("data/raw/gwas/output/hardfiltered_biallelic_cr09_mm005_gwas.cXX.txt",
+                sep = "\t",
+                header = FALSE,
+                stringsAsFactors = FALSE)
+# make a vector of names to display (otherwise the row and col number is shown)
+ids <- id_order$V1
+# import the admixture group assignment to annotate the heatmap
+adm <- read.table("data/raw/admixture/q2_admixture.csv",
+                  sep = ",",
+                  header = TRUE,
+                  stringsAsFactors = FALSE)
+# the admixture palette
+mypal <- c('#d9d9d9', '#e6002e')
+adm_sorted <- adm$q2_group[match(id_order$V1, adm$id)]
+adm_col <- mypal[adm_sorted]
+# colour based on location
+loc_sorted <- adm$location[match(id_order$V1, adm$id)]
+loc_col <- c("#d8b365", "#5ab4ac")[as.factor(loc_sorted)]
+# colour based on family
+pheno_sorted <- pheno_raw[match(id_order$V1, pheno_raw$new_id_short), ]
+fam_col <- rainbow(25)[as.factor(pheno_sorted$parental)]
+```
+
+And visualised.
+
+```{r relatedness_heatmap, results=FALSE, fig.width = 5, fig.height = 5, fig.show="hold"}
+pl <- function(){
+  heatmap(as.matrix(k_m),
+        labRow = ids,
+        labCol = ids,
+        ColSideColors = adm_col,
+        RowSideColors = loc_col,
+        main = "GWAS",
+        xlab = "Plant ID, admixture group",
+        ylab = "Plant ID, hybrid zone")
+  heatmap(as.matrix(k_m),
+        labRow = pheno_sorted$parental,
+        labCol = ids,
+        ColSideColors = adm_col,
+        RowSideColors = fam_col,
+        main = "GWAS",
+        xlab = "Plant ID, admixture group",
+        ylab = "Parental ID, parental")
+}
+pdf("figures/exploratory/gwas/plot_relatedness_heatmap.pdf",
+    width = 6, height = 9)
+pl()
+dev.off()
+pl()
+
+```
+
+Notice that the relatedness matrix diagonal is not one. This is the related 
+explanation from Xiang Zhou:
+
+"The centered relatedness matrix does not scale each column of the genotype 
+matrix, so the main diagonal of the resulting relatedness matrix will not be 
+close to 1s (usually around 0.3 depending on maf etc.)."
+
+## Association models: LM
+
+We performed the association analysis first with a linear model which does not
+correct for kinship. We did so in order to compare the QQplots of the P values,
+and determine if relatedness correction can reduce inflation of the P values.
+
+To be able to compare the P values I store them in a separate df, qqdf.
+
+### Tube length
+
+Read results, and plot QQ-plot.
+
+```{r lm4_pheno1}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno1_lm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = T,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno1_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+qqdf <- data.frame(phenotype = rep("Tube length", times = length(y)),
+                   model = rep("lm", times = length(y)),
+                   p_obs = y,
+                   p_the = x,
+                   stringsAsFactors = FALSE)
+```
+
+### Pistil length
+
+Read results and make plots.
+
+```{r lm4_pheno2}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno2_lm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = T,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno2_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Pistil length", times = length(y)),
+                  model = rep("lm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+### Flavonol content
+
+Read results and plot.
+
+```{r lm4_pheno3}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno3_lm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = TRUE,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno3_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Flavonol content", times = length(y)),
+                  model = rep("lm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+
+### Anthocyanin content
+
+Read results and plot.
+
+```{r lm4_morpho4}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno4_lm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = T,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno4_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Anthocyanin content", times = length(y)),
+                  model = rep("lm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+
+## Association models: LMM
+
+### Tube length
+
+```{r lmm4_pheno1}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno1_lmm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = T,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno1_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Tube length", times = length(y)),
+                  model = rep("lmm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+### Pistil length
+
+```{r lmm4_pheno2}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno2_lmm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = T,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno2_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Pistil length", times = length(y)),
+                  model = rep("lmm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+### Falvonol content
+
+```{r lmm4_pheno3}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno3_lmm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = TRUE,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno3_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Flavonol content", times = length(y)),
+                  model = rep("lmm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+
+### Anthocyanin content
+
+```{r lmm4_pheno4}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno4_lmm4"
+assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
+                    header = T,
+                    as.is = "rs")
+# choose p value test
+p <- "p_lrt"
+qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
+mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.95, correct = TRUE)}
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno4_", p, ".png"),
+    width = 1600, height = 300)
+layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
+qq()
+mh()
+dev.off()
+qq()
+mh()
+# save p values theoretical and observed distributions
+n <- dim(assoc_df)[1]
+x <- -log10((1:n)/n)
+y <- rev(sort(-log10(assoc_df[ , "p_lrt"])))
+# save the logP in a new df to plot all the P in the same qqplot
+tmp <- data.frame(phenotype = rep("Anthocyanin content", times = length(y)),
+                  model = rep("lmm", times = length(y)),
+                  p_obs = y,
+                  p_the = x,
+                  stringsAsFactors = FALSE)
+qqdf <- rbind(qqdf,
+               tmp)
+rm(tmp)
+```
+
+## QQ-plots of P values for inflation
+
+I plot the observed and theoretical distribution of the P values in a QQ plot
+to observe if the inflation is reduced with the kinship matrix applied in the 
+linear mixed model compared to the simple linear model.
+
+```{r qqplots}
+# map colours to different models
+qqdf$colour <- NA
+qqdf$colour[qqdf$model == "lm"] <- "#5e3c99"
+qqdf$colour[qqdf$model == "lmm"] <- "#e66101"
+
+p <- ggplot(qqdf,
+       aes(x = p_the,
+           y = p_obs,
+           col = colour)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, lty = 2) +
+  facet_wrap(~phenotype, nrow = 2) +
+  scale_colour_identity()
+ggsave(filename = "figures/exploratory/gwas/qqplot.png",
+       plot = p, 
+       width = 5.5 * 3,
+       height = 5.5 * 3, 
+       units = "cm")
+p
+```
+
+
+## Prediction of genetic architecture: BSLMM
+
+The BSLMM analysis with GEMMA produces several files:
+
+* basename.bv.txt -> posterior samples of breeding values (~estimated random effects)
+* basename.gamma.txt -> posterior samples of gamma
+* basename.hyp.txt -> posterior samples of hyperparameters
+* basename.log.txt -> log file
+* basename.param.txt -> posterior samples of parameters
+
+```{r}
+basenames <- c("hardfiltered_biallelic_cr09_mm005_pheno1_bslmm1",
+               "hardfiltered_biallelic_cr09_mm005_pheno2_bslmm1",
+               "hardfiltered_biallelic_cr09_mm005_pheno3_bslmm1",
+               "hardfiltered_biallelic_cr09_mm005_pheno4_bslmm1")
+```
+
+#### Hyperparameters 
+
+The hyperparameters for each set are read, and summarised by statistics. The
+results are saved in a single table that has information on all the sets. A pdf
+per each set is produced, and contains the plots of the hyperparameters.
+
+Hyperparameters:
+
+* **h** approximation to proportion of phenotypic variance explained by variants (PVE)
+* **rho** approximation to proportion of genetic variance explained by variants with major effect (PGE)
+    * rho = 0 -> pure LMM, highly polygenic basis
+    * rho = 1 -> pure BVSR, few major effect loci
+* **pi** proportion of variants with non-zero effects
+* **n.gamma** number of variants with major effect
+
+Get mean, median, and 95% ETPI of hyperparameters:
+
+```{r hyp}
+# set of hyperparameters to analyse
+hyps <- c("h", "pve", "rho", "pge", "pi", "n_gamma")
+
+# initialise empty table file of hyperparameter stats
+hyp_summary <- data.frame(stringsAsFactors = F)
+
+# loop through phenotypes
+for (set in basenames) {
+  # read hyp
+  hyp.params <- read.table(paste0("data/raw/gwas/output/", set, ".hyp.txt"),
+                           header = T)
+  # calculate stats
+  for (hyp in hyps) {
+    newline <- c(set, hyp, mean(hyp.params[ , hyp]),
+                 sd(hyp.params[ , hyp]),
+                 quantile(hyp.params[ , hyp], probs = c(0.025, 0.975)))
+    # append stats to table
+    hyp_summary <- rbind(hyp_summary,
+                         newline, stringsAsFactors = F)
+  }
+  # make pdf plot
+  pdf(file = paste0("figures/exploratory/gwas/", set, "_hyperparameters.pdf"),
+      width = 8.3, height = 11.7)
+  layout(matrix(c(1,2,3,4,5,6,7,8), 4, 2, byrow = TRUE))
+  # h
+  hist(hyp.params$h, main="h-posterior distribution", xlab="h")
+  plot(density(hyp.params$h), main="h -posterior distribution", xlab="h")
+  # PVE
+  hist(hyp.params$pve, main="PVE -posterior distribution", xlab="PVE")
+  plot(density(hyp.params$pve), main="PVE -posterior distribution", xlab="PVE")
+  # rho
+  hist(hyp.params$rho, main="rho -posterior distribution", xlab="rho")
+  plot(density(hyp.params$rho), main="rho -posterior distribution", xlab="rho")
+  # PGE
+  hist(hyp.params$pge, main="PGE -posterior distribution", xlab="PGE")
+  plot(density(hyp.params$pge), main="PGE -posterior distribution", xlab="PGE")
+  # pi
+  hist(hyp.params$pi, main="pi", xlab="pi")
+  plot(density(hyp.params$pi), main="pi", xlab="pi")
+  # No gamma
+  hist(hyp.params$n_gamma, main="n_gamma -posterior distribution", xlab="n_gamma")
+  plot(density(hyp.params$pi), main="n_gamma -posterior distribution", xlab="n_gamma")
+  dev.off()
+}
+
+colnames(hyp_summary) <- c("file", "hyperpar", "mean", "sd", "pc2.5", "pc97.5")
+hyp_summary[ , 3:6] <- apply(hyp_summary[ , 3:6], MARGIN = 2, FUN = as.numeric)
+
+hyp_summary$pheno <- gsub(pattern = "hardfiltered_biallelic_cr09_mm005_(pheno\\d+)_bslmm\\d", replacement = "\\1",
+     x = hyp_summary$file, perl = T)
+# export table
+write.table(hyp_summary,
+            "data/raw/gwas/output/hyperparameters_bslmm_pheno.csv",
+            quote = F,
+            sep = ",",
+            row.names = F)
+hyp_summary$pheno.short <- gsub("pheno", "", hyp_summary$pheno)
+pl <- function() {
+  ggplot(hyp_summary,
+       aes(x = pheno.short, y = mean)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd)) +
+  facet_wrap(~hyperpar, scales = "free") +
+  theme_classic() +
+  xlab("Phenotype") +
+  ylab("Mean of hyperparameter") +
+  ggtitle("Hyperparameter mean for BSLMM")
+}
+png(filename = "figures/exploratory/gwas/hyperparameter_mean_bslmm.png", width = 650, height = 900)
+pl()
+dev.off()
+pl()
+
+rm(hyp, hyps, set, pl, newline)
+
+```
+
+
+#### Parameters
+
+From the parameter file we extract the sparse effect size beta and we multiply 
+it by gamma, because beta is not just b, but it's beta when gamma == 1.
+
+We also get variants with high Posterior Inclusion Probability (PIP = gamma).
+PIP is the frequency a variant is estimated to have a sparse effect in the MCMC
+(the number of times it appears in the MCMC with a non-zero sparse effect).
+
+```{r parameters}
+for (set in basenames) {
+  print(paste0("Set ", set))
+  params <- as.data.frame(fread(paste0("data/raw/gwas/output/", set, ".param.txt"),
+                                header = T, sep = "\t"))
+  #  add sparse effect size (= beta * gamma) to data frame
+  params["eff"] <- abs(params$beta * params$gamma)
+  # Get variants with sparse effect size > 0
+  params.effects <- params[params$eff > 0, ]
+  print(paste0(nrow(params.effects), " variants have sparse effect size > 0."))
+  # check if there are variants with effect > 0
+  if ( nrow(params.effects) > 0 ) {
+    # Sort by decreasing effect size
+    params.effects <- params.effects[order(-params.effects$eff), ]
+    # top 1% variants (above 99% quantile)
+    top1 <- params.effects[params.effects$eff > quantile(params.effects$eff, 0.99), ]
+    # write table
+    write.table(top1, file = paste0("data/raw/gwas/output/", set, "_top1eff.dsv"), quote = F, row.names = F, sep = "\t")
+    assign(paste0(set, ".params"), params.effects)
+  }
+  # sort variants by descending PIP
+  params.pipsort <- params[order(-params$gamma), ]
+  # Sets of variants above a certain threshold
+  # variants with effect in 1% MCMC samples or more
+  pip01 <- params.pipsort[params.pipsort$gamma >= 0.01, ]
+  print(paste0(nrow(pip01), " variants have gamma >= 0.01."))
+  if ( nrow(pip01) > 0 ) {
+    write.table(pip01, file = paste0("data/raw/gwas/output/", set, "_pip01.dsv"), quote = F, row.names = F, sep = "\t")
+  }
+}
+```
+
+Plot variant PIPs across linkage groups/chromosomes. Only variants with effect
+higher than 0 are shown.
+
+```{r}
+for (set in basenames) {
+  if ( exists(paste0(set, ".params")) ) {
+    params <- get(x = paste0(set, ".params"))
+  png(file = paste0("figures/exploratory/gwas/", set, "_pip_plot.png"),
+      width = 11.7,
+      height = 7.6,
+      units = "in",
+      res = 200)
+  pip_plot(params, title = set)
+  dev.off()
+  }
+}
+
+```
