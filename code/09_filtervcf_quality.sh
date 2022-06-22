@@ -33,7 +33,7 @@ module load vital-it
 module add UHTS/Analysis/picard-tools/2.21.8
 module add UHTS/Analysis/GenomeAnalysisTK/4.1.3.0
 module load UHTS/Analysis/vcftools/0.1.15
-angsddir=/storage/homefs/mbinaghi/tools/angsd
+angsddir=/xxx/tools/angsd
 
 
 # print which modules are loaded (gives the version of the software
