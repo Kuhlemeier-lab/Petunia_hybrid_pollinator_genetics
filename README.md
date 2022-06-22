@@ -2,9 +2,11 @@
 
 Bioinformatic analyses performed in the experiments for the publication about the genetic basis of pollination syndromes in Petunia axillaris and P. exserta.
 
+**Add ref to paper**
+
 Project conducted in the [Plant genetics and development group](https://www.ips.unibe.ch/research/deve/index_eng.html) at the Institute of Plant Sciences of the University of Bern.
 
-Authors: Marta Binaghi, Marius Roesti, Therese Mandel, Korinna Esfeld, Loreta B. Freitas, Cris Kuhlemeier
+Authors: Marta Binaghi, Korinna Esfeld, Therese Mandel,  Loreta B. Freitas, Marius Roesti, Cris Kuhlemeier
 
 Author of this page: Marta Binaghi
 
@@ -101,9 +103,9 @@ These are performed with the software [GEMMA](https://github.com/genetics-statis
 The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh]
 (code/13a_gwas_genotype_formatting.sh) which uses the script [bcf2bbgeno_edit.pl](code/bcf2bbgeno_edit.pl) to convert the vcf into a bimbam format file.
 
-To prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.sh](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions. The output of the R markdown in available in [13b_gwas_phenotype_formatting.Rmd](code/13b_gwas_phenotype_formatting.Rmd).
+To prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.Rmd](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions. The output of the R markdown in available in [13b_gwas_phenotype_formatting.html](code/13b_gwas_phenotype_formatting.html).
 
-In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](13b_gwas_phenotype_formatting.html). Each phenotypic trait is assigned an integer in order to be able to loop through them more easily in the analyses.
+In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](code/13b_gwas_phenotype_formatting.html). Each phenotypic trait is assigned an integer in order to be able to loop through them more easily in the analyses.
 
 1. Tube length
 2. Pistil length
@@ -145,7 +147,7 @@ Is done by calculating a sliding window Fst with ANGSD, with script [14a_diverge
 
 Briefly, to calculate Fst with ANGSD I divide the vcf files into two files with the individuals with admixture < 0.25 and one with > 0.75. I then do `-doSaf 1` and use realSFS to get the 2D sfs prior.  I then use realSFS to calculate the Fst and then use again realSFS to summarise by window.
 
-The results are then plotted with [14b_divergence.R](14b_divergence.R).
+The results are then plotted with [14b_divergence.R](code/14b_divergence.R).
 
 
 
@@ -167,7 +169,7 @@ The library permits to provide a genome index file, and regions in two groups fo
 - GenomeAnalysisTK/4.1.3.0
 - pcangsd v 1.10
 - picard-tools/2.21.8
-- R on the computing cluster 3.4.2
+- R on the computing cluster 3.4.2 (in 08 it's 4.0.0)
 - R on the local machine 3.3.3
 - RepeatModeler/1.0.11
 - samtools/1.10
@@ -177,6 +179,7 @@ The library permits to provide a genome index file, and regions in two groups fo
 
 ### R libraries
 
+- calibrate
 - corrplot
 - data.table
 - dplyr
@@ -186,10 +189,10 @@ The library permits to provide a genome index file, and regions in two groups fo
 - IRanges
 - optparse https://cran.r-project.org/package=optparse
 - RColorBrewer
+- RcppCNPy
 - regioneR
 - reshape2
 - scales
-- 
 
 ## References
 
