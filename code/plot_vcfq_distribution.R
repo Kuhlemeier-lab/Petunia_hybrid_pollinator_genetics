@@ -52,10 +52,6 @@ opt_parser = OptionParser(usage = "Usage: %prog -i myvariants.table",
 opt = parse_args(opt_parser);
 
 
-# testing -----------------------------------------------------------------
-#opt$input <- "~/phd/new_hybrids/data/raw/variants/raw_snp.vcf.head.table"
-#opt$vcftype <- "snp"
-
 # manage NULL input -------------------------------------------------------
 
 if (is.null(opt$input)){
@@ -208,7 +204,3 @@ if (opt$pdf != "singleplots" & opt$pdf != "onepage") {
      }
      dev.off()
   }
-
-writeLines("\nPlots are plotted!
-See README.md for further details on the plots and hard-filtering
-recommended values.")
