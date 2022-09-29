@@ -34,7 +34,7 @@ module load vital-it
 module load SequenceAnalysis/Repeat/RepeatModeler/1.0.11
 module list 2>&1
 
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 if [ ! -d ${scdir}/data/genomes/repeatModeler ]; then
     mkdir -p ${scdir}/data/genomes/repeatModeler
@@ -45,13 +45,13 @@ cd ${scdir}/data/genomes/repeatModeler
 
 # build a database
 BuildDatabase \
-    -name Peax402INV_repmodeler \
+    -name Peax403_repmodeler \
     -engine ncbi \
     ${genome}
 
 # model repeats
 RepeatModeler \
-    -database Peax402INV_repmodeler \
+    -database Peax403_repmodeler \
     -engine ncbi \
     -pa 8
 
@@ -65,7 +65,7 @@ RepeatMasker \
     -pa 4 \
     -s \
     -e ncbi \
-    -lib ${scdir}/data/genomes/repeatModeler/TREP_and_Peax402INV_repeat_library.fasta \
+    -lib ${scdir}/data/genomes/repeatModeler/TREP_and_Peax403_repeat_library.fasta \
     -dir ${scdir}/data/genomes/repeatModeler \
     -gff \
     ${genome}
