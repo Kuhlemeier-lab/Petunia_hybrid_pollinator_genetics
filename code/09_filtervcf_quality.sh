@@ -14,7 +14,7 @@
 
 # Partition
 #SBATCH --partition=epyc2
-#SBATCH --account=ips_ck
+#SBATCH --account=xxx
 #SBATCH --chdir=/xxx/hybrids_peaxiINV
 #SBATCH --output=code/09_filtervcf_quality_%A.out
 #SBATCH --error=code/09_filtervcf_quality_%A.err
@@ -43,7 +43,7 @@ module list 2>&1
 java -showversion 2>&1 >/dev/null | grep -P "JDK|jdk"
 
 # reference genome
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 # Filter variants
 cd ${scdir}/data/raw/variants
@@ -173,7 +173,7 @@ ${angsddir}/angsd -doMaf 1 \
   -out ${scdir}/data/raw/variants/hardfiltered_biallelic_cr09_mm005 \
   -vcf-PL ${scdir}/data/raw/variants/hardfiltered_biallelic_cr09.recode.vcf \
   -nInd 70 -P 1 \
-  -fai ${scdir}/data/genomes/Peax402INV.fasta.fai \
+  -fai ${scdir}/data/genomes/Peax403.fasta.fai \
   -minMaf 0.05
 
 echo -e "Re-format mafs file to use it to subset the vcf with vcftools\n"
