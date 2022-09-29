@@ -40,7 +40,7 @@ module list 2>&1
 java -showversion 2>&1 >/dev/null | grep -P "JDK|jdk"
 
 # reference genome
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 # combine GVCFs
 cd ${scdir}/data/raw/variants
