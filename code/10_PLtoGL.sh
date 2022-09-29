@@ -14,7 +14,7 @@
 
 # Partition
 #SBATCH --partition=epyc2
-#SBATCH --account=ips_ck
+#SBATCH --account=xxx
 #SBATCH --chdir=/xxx/hybrids_peaxiINV
 #SBATCH --output=code/10_PLtoGL_%A.out
 #SBATCH --error=code/10_PLtoGL_%A.err
