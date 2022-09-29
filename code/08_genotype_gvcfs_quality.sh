@@ -40,7 +40,7 @@ module list 2>&1
 
 
 # reference genome
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 cd ${scdir}/data/raw/variants
 
