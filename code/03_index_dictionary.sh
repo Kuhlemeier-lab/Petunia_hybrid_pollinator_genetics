@@ -37,9 +37,9 @@ module add UHTS/Analysis/samtools/1.10
 module list 2>&1
 
 # make genome indexes for future use
-ln -s /yyy/genomes/Peax402INV.fasta ${scdir}/data/genomes/Peax402INV.fasta
+ln -s /yyy/genomes/Peax403.fasta ${scdir}/data/genomes/Peax403.fasta
 cd ${scdir}/data/genomes/
-bwa index Peax402INV.fasta
+bwa index Peax403.fasta
 echo -e "Indexing done.\n"
 
 echo -e "Make dictionary.\n"
@@ -47,8 +47,8 @@ echo -e "Make dictionary.\n"
 cd ${scdir}/data/genomes
 echo -e "\n## dictionary\ncurrent dir: `pwd`\n"
 picard-tools CreateSequenceDictionary \
-    R=Peax402INV.fasta \
-    O=Peax402INV.dict
+    R=Peax403.fasta \
+    O=Peax403.dict
 
 samtools faidx Peax402INV.fasta
 echo -e "Dictionary done.\n"
