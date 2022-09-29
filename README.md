@@ -51,7 +51,7 @@ Some numbers of mapped reads, duplicated reads, genome and gene space coverage a
 
 | Metric | Value | 
 | --------------- | --------------- |
-| Average coverage genome space | 5.20 |
+| Average coverage genome space | 5.19 |
 | Average coverage gene space | 6.20 | 
 | Proportion genome covered 1X | 0.79 |
 | Proportion genome covered 5X | 0.46 |
