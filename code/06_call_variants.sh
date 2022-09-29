@@ -47,7 +47,7 @@ module list 2>&1
 java -showversion 2>&1 >/dev/null | grep -P "JDK|jdk"
 
 # reference genome
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 cd ${scdir}/data/raw/
 if [ ! -d variants ]; then
@@ -62,6 +62,6 @@ GenomeAnalysisTK HaplotypeCaller \
      --do-not-run-physical-phasing \
      -O ${scdir}/data/raw/variants/${SLURM_ARRAY_TASK_ID}.g.vcf \
      --native-pair-hmm-threads 32 \
-     --exclude-intervals ${scdir}/data/genomes/Peax402INV_repetitive_and_min100Xcov.bed
+     --exclude-intervals ${scdir}/data/genomes/Peax403_repetitive_and_min100Xcov.bed
 
 echo -e "Done variants calling.\n"
