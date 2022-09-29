@@ -47,7 +47,7 @@ for ( i in 2:70 ) {
 
 
 # merge with the regions from repeat masker.
-gff <- read.table("data/genome/Peax402INV.fasta_repeatModeler_TREP_repeats.gff",
+gff <- read.table("data/genome/Peax403.fasta_repeatModeler_TREP_repeats.gff",
                   sep = "\t",
                   header = FALSE,
                   colClasses = c("character", "NULL", "NULL", "integer", "integer",
@@ -71,7 +71,7 @@ ind <- as.integer(ind)
 out <- out[order(ind, out$start), ]
 
 write.table(out,
-            "data/genome/Peax402INV_repetitive_and_min100Xcov.bed", 
+            "data/genome/Peax403_repetitive_and_min100Xcov.bed", 
             quote = FALSE, 
             sep = "\t", 
             row.names = FALSE, 
