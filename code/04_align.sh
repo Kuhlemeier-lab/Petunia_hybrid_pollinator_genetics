@@ -26,7 +26,7 @@
 chdir=/xxx/hybrids_peaxiINV
 scdir=/xxx/hybrids_peaxiINV
 
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 echo -e "#### Align reads
 ## `date`
@@ -39,7 +39,7 @@ module add UHTS/Analysis/samtools/1.10
 
 module list 2>&1
 
-# align reads to the P. axillaris unmasked 402 assembly
+# align reads to the P. axillaris unmasked 403 assembly
 cd ${scdir}/data/raw
 if [ ! -d aligned_reads ]; then
 	mkdir aligned_reads
