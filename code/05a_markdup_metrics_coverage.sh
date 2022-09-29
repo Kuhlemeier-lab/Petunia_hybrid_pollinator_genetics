@@ -40,7 +40,7 @@ module add UHTS/Analysis/BEDTools/2.29.2
 
 module list 2>&1
 
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 # Mark the duplicated reads
 cd ${scdir}/data/raw/aligned_reads
@@ -81,17 +81,17 @@ echo -e "calculate wgs metris only on gene space"
 grep -P "(@SQ)|(@HD)" ${scdir}/data/genomes/Peax402INV.dict > ${scdir}/data/genomes/Peax402INV.gene${SLURM_ARRAY_TASK_ID}.picardlist
 # extract gene regions into a picard interval list file
 
-ln -s /xxx/peaxi162AQ_Peax402INV.cds.gff ${scdir}/data/genomes/peaxi162AQ_Peax402INV.cds.gff
+ln -s /xxx/Peax403.cds.gff ${scdir}/data/genomes/Peax403.cds.gff
 
-grep -P "\sgene\s" ${scdir}/data/genomes/peaxi162AQ_Peax402INV.cds.gff | cut -f 1,4,5,7,9 | cut -d ";" -f 1 >> ${scdir}/data/genomes/Peax402INV.gene${SLURM_ARRAY_TASK_ID}.picardlist
+grep -P "\sgene\s" ${scdir}/data/genomes/Peax403.cds.gff | cut -f 1,4,5,7,9 | cut -d ";" -f 1 >> ${scdir}/data/genomes/Peax403.gene${SLURM_ARRAY_TASK_ID}.picardlist
 # calculate metrics on this subset of intervals
 picard-tools CollectWgsMetrics \
     I=${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_marked_duplicates.bam \
     O=${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_marked_duplicates_genespace_wgsmetrics.txt \
     R=${genome} \
-    INTERVALS=${scdir}/data/genomes/Peax402INV.gene${SLURM_ARRAY_TASK_ID}.picardlist
+    INTERVALS=${scdir}/data/genomes/Peax403.gene${SLURM_ARRAY_TASK_ID}.picardlist
 
-rm ${scdir}/data/genomes/Peax402INV.genesonly.gene${SLURM_ARRAY_TASK_ID}.picardlist
+rm ${scdir}/data/genomes/Peax403.genesonly.gene${SLURM_ARRAY_TASK_ID}.picardlist
 
 picard-tools CollectQualityYieldMetrics \
     I=${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_marked_duplicates.bam \
@@ -99,4 +99,4 @@ picard-tools CollectQualityYieldMetrics \
 
 
 export SINGULARITY_BINDPATH="$scdir:/scdir"
-singularity exec /storage/homefs/mbinaghi/covtobed_latest.sif coverage -q -s -m 100 -r -i ${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_marked_duplicates.bam > ${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_md_mincov100
+singularity exec /zzz/covtobed_latest.sif coverage -q -s -m 100 -r -i ${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_marked_duplicates.bam > ${scdir}/data/raw/aligned_reads/${SLURM_ARRAY_TASK_ID}_md_mincov100
