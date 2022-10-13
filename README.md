@@ -1,4 +1,4 @@
-# Petunia axillaris x P. exserta natural hybrids, genetic basis of a pollination syndrome
+# Genetic architecture of a pollinator shift and its fate in secondary contact zones in two *Petunia* plant species
 
 Bioinformatic analyses performed in the experiments for the publication about the genetic basis of pollination syndromes in Petunia axillaris and P. exserta.
 
@@ -6,7 +6,7 @@ Bioinformatic analyses performed in the experiments for the publication about th
 
 Project conducted in the [Plant genetics and development group](https://www.ips.unibe.ch/research/deve/index_eng.html) at the Institute of Plant Sciences of the University of Bern.
 
-Authors: Marta Binaghi, Korinna Esfeld, Therese Mandel,  Loreta B. Freitas, Marius Roesti, Cris Kuhlemeier
+Authors: Marta Binaghi, Korinna Esfeld, Therese Mandel, Loreta B. Freitas, Marius Roesti, Cris Kuhlemeier
 
 Author of this page: Marta Binaghi
 
@@ -24,16 +24,18 @@ The figures showing the distribution of the phenotypes and the difference betwee
 
 ## Pipeline
 
-### Reads preparation
+All analyses were performed on the reference genome sequence of P. axillaris N version 4.03 available on NCBI GenBank under the accession JANRMM000000000 (submission accepted, currently being processed by NCBI).
 
-#### Raw reads download
+### Read preparation
+
+#### Raw read download
 
 [01_get_raw_reads.sh](code/01_get_raw_reads.sh) and [rename_reads.sh](code/rename_reads.sh) with reference table [reads_sample_ID.csv](data/reads_sample_ID.csv).
 
 #### Quality control and trimming
 
 [02a_trim_rawreads.sh](code/02a_trim_rawreads.sh) performs quality control with fastqc, then trims the reads with parameters:
-` LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:100 `. It then performs a second quality control.
+` LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:100 `. It removes polyG sequences that are produced by the NovaSeq. Then it performs a second quality control.
 
 [02b_fqc_summary.sh](code/02b_fqc_summary.sh) summarises the output of fastqc using a python script: [fastqc_parser.py](code/fastqc_parser.py).
 The read counts for raw and trimmed reads is in [raw_reads_count.csv](data/raw_reads_count.csv).
@@ -43,9 +45,9 @@ The read counts for raw and trimmed reads is in [raw_reads_count.csv](data/raw_r
 
 Genome index and dictionary done with script [03_index_dictionary.sh](code/03_index_dictionary.sh).
 
-Alignment done with BWA, script [04_align.sh](code/04_align.sh), with BWA-MEM default parameters.
+Alignment done with BWA, script [04_align.sh](code/04_align.sh), with BWA-MEM default parameters. At this step we also incorporate the read group information, which is a prerequisite for GATK.
 
-Duplicated reads marking done with [05a_markdup_metrics_coverage.sh](code/05a_markdup_metrics_coverage.sh), which also calculate some stats about the read mapped and extracts the coordinates of the regions with coverage higher than 100 reads. These regions were then excluded from the variant calling together with the repetitive regions. Repetitive regions identified with repeatMasker, including the modeled regions on the reference genome and [the TREP complete nucleotide database release 19](https://trep-db.uzh.ch/). Step performed in script [05b_mark_repetitive_regions.sh](code/05b_mark_repetitive_regions.sh). The regions to exclude are merged with the annotated repetitive regions with an R script [05c_regions_to_mask.R](code/05c_regions_to_mask.R).
+Duplicated reads marking done with [05a_markdup_metrics_coverage.sh](code/05a_markdup_metrics_coverage.sh), which also calculate some stats about the read mapped and extracts the coordinates of the regions with coverage higher than 100 reads in any sample (meaning that if one sample only, or more than one sample have 200 reads on position 1, this position will be masked from the variant calling). These regions were then excluded from the variant calling together with the repetitive regions. Repetitive regions identified with repeatMasker, including the modeled regions on the reference genome and [the TREP complete nucleotide database release 19](https://trep-db.uzh.ch/). Step performed in script [05b_mark_repetitive_regions.sh](code/05b_mark_repetitive_regions.sh). The regions to exclude are merged with the annotated repetitive regions with an R script [05c_regions_to_mask.R](code/05c_regions_to_mask.R).
 
 Some numbers of mapped reads, duplicated reads, genome and gene space coverage are listed in [alignment_metrics.csv](data/alignment_metrics.csv).
 
@@ -61,7 +63,7 @@ Some numbers of mapped reads, duplicated reads, genome and gene space coverage a
 
 ### Variant calling
 
-Performed with GATK v 4.1.3.0, following best practices. Since Petunia does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. 
+Performed with GATK v 4.1.3.0, following best practices. Since *Petunia* does not have a high quality reference database of variants, we applied filters on the called variants as suggested by GATK. To check that the quality filters suggested in best practices were suitable, we plot the distribution of the quality values of the variants. 
 
 Variant calling performed with script [06_call_variants.sh](code/06_call_variants.sh). We then combined the g.vcf files with script [07_combine_gvcfs.sh](code/07_combine_gvcfs.sh). The genotype calling and variant quality evaluation is done with script [08_genotype_gvcfs_quality.sh](code/08_genotype_gvcfs_quality.sh). In this script we call an R script to plot the distribution of the quality values to verify that the hard filters proposed by GATK are appropriate. This is done with [plot_vcfq_distribution.R](code/plot_vcfq_distribution.R) to make the plots which can be seen in [indel_quality.pdf](data/indel_quality.pdf) and [snp_quality.pdf](data/snp_quality.pdf).
 
@@ -85,13 +87,13 @@ Is performed with NGSadmix, provided in ANGSD, with script [11a_ngsadmix.sh](cod
 python code/ngsadmix_outparser.py -p data/raw/admixture
 ```
 
-The results are then analysed in R. with script [11b_ngsadmix.R](code/11b_ngsadmix.R).
+The results are then analysed in R with script [11b_ngsadmix.R](code/11b_ngsadmix.R).
 
 In the R script we also produce a text file that holds the individual IDs of plants in each admixture group for K = 2, with groups defined as group 1 >= 0.75 and group 2 <= 0.25. The resulting file is later used to divide the variant file into two files one per admixture group.
 
 ### Genomic PCA analysis
 
-Is performed with pcangsd version 1.10, using `--minMaf 0` and one thread. Script is [12a_pcangsd.sh](code/12a_pcangsd.sh).
+Is performed with pcangsd version 1.10, using `--minMaf 0` and one thread. Note that I use one thread because some tools of ANGSD mess up the positions in the file if you multithread. Script is [12a_pcangsd.sh](code/12a_pcangsd.sh).
 
 The results are analysed and plotted with the Rmd script [12b_pcangsd.Rmd](code/12b_pcangsd.Rmd), for which the output is available in [12b_pcangsd.html](code/12b_pcangsd.html).
 
@@ -100,17 +102,15 @@ The results are analysed and plotted with the Rmd script [12b_pcangsd.Rmd](code/
 
 These are performed with the software [GEMMA](https://github.com/genetics-statistics/GEMMA).
 
-The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh]
-(code/13a_gwas_genotype_formatting.sh) which uses the script [bcf2bbgeno_edit.pl](code/bcf2bbgeno_edit.pl) to convert the vcf into a bimbam format file.
+The analyses require phenotype and genotype data as input. To prepare the genotype data I used script [13a_gwas_genotype_formatting.sh](code/13a_gwas_genotype_formatting.sh) which uses the script [bcf2bbgeno_edit.pl](code/bcf2bbgeno_edit.pl) to convert the vcf into a bimbam format file.
 
-To prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.Rmd](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions. The output of the R markdown in available in [13b_gwas_phenotype_formatting.html](code/13b_gwas_phenotype_formatting.html).
+To prepare the phenotype I used an R script, [13b_gwas_phenotype_formatting.Rmd](code/13b_gwas_phenotype_formatting.Rmd). In the latter I also tested the normality of the phenotype distributions.
 
-In the R markdown script [13b](code/13b_gwas_phenotype_formatting.Rmd) I also analysed the phenotype data. I plotted their distributions, and checked their pairwise correlations and correlation to the genomic PCA. The markdown output in html is available in [13b_gwas_phenotype_formatting.html](code/13b_gwas_phenotype_formatting.html). Each phenotypic trait is assigned an integer in order to be able to loop through them more easily in the analyses.
+Each phenotypic trait is assigned an integer in order to be able to loop through them more easily in the analyses.
 
-1. Tube length
-2. Pistil length
-3. Flavonol content
-4. Anthocyanin content
+1. Pistil exsertion
+2. Flavonol content
+3. Anthocyanin content
 
 I then use the genotype hardfiltered_biallelic_cr09_mm005.bimbam.gz and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
 
@@ -131,10 +131,10 @@ We then apply the bayesian sparse linear mixed model (BSLMM) to estimate the gen
 -wpace 10000000
 ```
 
-The output of all analyses is analysed in script [13d_gemma.Rmd](code/13d_gemma.Rmd). In this script, part of the analysis of the BSLMM is adapted from a lecture of Victor Soria-Carrasco from the University of Sheffield. The complete tutorial can be found here:
+The output of all analyses is analysed in script **to fix** [13d_gemma.Rmd](code/13d_gemma.Rmd). In this script, part of the analysis of the BSLMM is adapted from a lecture of Victor Soria-Carrasco from the University of Sheffield. The complete tutorial can be found here:
 http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf
 
-The script also uses some functions from a file that is sourced at the beginning of the Rmd, it's [13_gwas_functions.R](code/13_gwas_functions.R).
+The script also uses some functions from a file that is sourced at the beginning of the Rmd, it's **to fix** [13_gwas_functions.R](code/13_gwas_functions.R).
 
 The output is [13d_gemma.html](code/13d_gemma.html).
 
