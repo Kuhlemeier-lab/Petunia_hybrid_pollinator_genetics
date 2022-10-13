@@ -16,12 +16,12 @@
 ##SBATCH --qos=job_epyc2_debug
 
 #SBATCH --account=xxx
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/13a_gwas_genotype_formatting_%A.out
 #SBATCH --error=code/13a_gwas_genotype_formatting_%A.err
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 
 module load vital-it
