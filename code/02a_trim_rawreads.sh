@@ -18,13 +18,13 @@
 #SBATCH --partition=epyc2
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/02a_trim_rawreads_%A_%a.out
 #SBATCH --error=code/02a_trim_rawreads_%A_%a.err
  
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
  
 echo -e "#### trimming
 ## `date`
