@@ -16,13 +16,13 @@
 #SBATCH --partition=epyc2
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/02b_fqc_summary_%A.out
 #SBATCH --error=code/02b_fqc_summary_%A.err
 
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Summary of fastqc outputs
 ## `date`
