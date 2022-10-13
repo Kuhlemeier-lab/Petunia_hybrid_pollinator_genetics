@@ -23,13 +23,13 @@
 ##SBATCH --qos=job_epyc2_debug
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/06_call_variants_%A_%a.out
 #SBATCH --error=code/06_call_variants_%A_%a.err
 
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Call variants
 ## `date`
