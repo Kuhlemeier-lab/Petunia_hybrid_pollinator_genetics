@@ -15,12 +15,12 @@
 # Partition
 #SBATCH --partition=epyc2
 #SBATCH --account=xxx
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/09_filtervcf_quality_%A.out
 #SBATCH --error=code/09_filtervcf_quality_%A.err
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Filter and select relevant variants.
 
