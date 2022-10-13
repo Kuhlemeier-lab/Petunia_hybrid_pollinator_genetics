@@ -16,12 +16,12 @@
 #SBATCH --partition=epyc2
 ##SBATCH --qos=job_epyc2_debug
 #SBATCH --account=xxx
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/12a_pcangsd_%A.out
 #SBATCH --error=code/12a_pcangsd_%A.err
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 module load Anaconda3
 # pcangsd version 1.10
