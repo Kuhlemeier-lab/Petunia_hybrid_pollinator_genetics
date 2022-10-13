@@ -16,13 +16,13 @@
 #SBATCH --partition=epyc2
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/03_index_dictionary_%A.out
 #SBATCH --error=code/03_index_dictionary_%A.err
 
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Make genome index
 ## `date`
@@ -50,6 +50,6 @@ picard-tools CreateSequenceDictionary \
     R=Peax403.fasta \
     O=Peax403.dict
 
-samtools faidx Peax402INV.fasta
+samtools faidx Peax403.fasta
 echo -e "Dictionary done.\n"
 
