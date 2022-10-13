@@ -17,7 +17,7 @@
 #SBATCH --qos=job_epyc2_debug
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/01_get_raw_reads_%A.out
 #SBATCH --error=code/01_get_raw_reads_%A.err
  
