@@ -1,17 +1,24 @@
-# Phenotype descriptive stats, normality plots, correlation with genetic PCA
+# Phenotype descriptive stats, normality, correlation with genetic PCA.
 # 23/08/2021
-# Last modified 13/06/2022
+# Last modified 13/10/2022
 # Marta Binaghi
 
-wdir <- "/xxx/hybrids_peaxiINV/"
+wdir <- "hybrids/"
 setwd(wdir)
 
+
+# libraries ---------------------------------------------------------------
+library(corrplot)
+library(reshape2)
+library(ggplot2)
 
 # import data -------------------------------------------------------------
 pheno <- read.table("data/clean/phenotype_sequenced_individuals.csv",
                     sep = ",",
                     header = TRUE,
                     stringsAsFactors = FALSE)
+# add pistil-tube ratio
+pheno$pist.tube.ratio <- pheno$pist / pheno$Dsum
 # import admixture information
 adm <- read.table("data/raw/admixture/q2_admixture.csv",
                   sep = ",",
@@ -24,28 +31,8 @@ pheno_adm <- merge.data.frame(pheno,
                               by.y = "id")
 
 
-# phenotype distribution --------------------------------------------------
-
-pl <- function(){
-  qqnorm(pheno_adm$pist, pch = 1, frame = FALSE, main = "Pistil length")
-  qqline(pheno_adm$pist, col = "#e6002e", lwd = 2)
-  qqnorm((pheno_adm$Dsum), pch = 1, frame = FALSE, main = "Tube length (D1+D2)")
-  qqline((pheno_adm$Dsum), col = "#e6002e", lwd = 2)
-  qqnorm((pheno_adm$flav), pch = 1, frame = FALSE, main = "Flavonols")
-  qqline((pheno_adm$flav), col = "#e6002e", lwd = 2)
-  qqnorm((pheno_adm$antho), pch = 1, frame = FALSE, main = "Anthocyanins")
-  qqline((pheno_adm$antho), col = "#e6002e", lwd = 2)
-}
-pdf("figures/exploratory/phenotype/plot_qq_pheno_distribution.pdf",
-    width = 6, height = 6)
-par(mfrow = c(2,  2))
-pl()
-dev.off()
-pl()
-
-
 # phenotype normality test ------------------------------------------------
-phenos <- c("antho", "flav", "Dsum", "pist")
+phenos <- c("antho", "flav", "pist.tube.ratio")
 
 # output file
 outfile <- "data/clean/phenotype_normality.txt"
@@ -70,7 +57,7 @@ pheno_adm$antho_rank <- rank(pheno_adm$antho, na.last = "keep")
 
 # phenotype means and SD in admixture groups ----------------------------------------
 # phenotypes
-phenos <- c("antho", "flav", "Dsum", "pist")
+phenos <- c("antho", "flav", "pist.tube.ratio")
 
 median_whole <- numeric()
 mean_whole <- numeric()
@@ -90,17 +77,17 @@ for (i in phenos) {
   sd_whole <- c(sd_whole,
                 sd(pheno_adm[ , i], na.rm = TRUE))
   median_adm0 <- c(median_adm0,
-                   median(pheno_adm[pheno_adm$Q2.2 <= 0.25, i], na.rm = TRUE))
+                   median(pheno_adm[pheno_adm$Q2.1 < 0.25, i], na.rm = TRUE))
   mean_adm0 <- c(mean_adm0,
-                 mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, i], na.rm = TRUE))
+                 mean(pheno_adm[pheno_adm$Q2.1 < 0.25, i], na.rm = TRUE))
   sd_adm0 <- c(sd_adm0,
-               sd(pheno_adm[pheno_adm$Q2.2 <= 0.25, i], na.rm = TRUE))
+               sd(pheno_adm[pheno_adm$Q2.1 < 0.25, i], na.rm = TRUE))
   median_adm1 <- c(median_adm1,
-                   median(pheno_adm[pheno_adm$Q2.2 >= 0.75, i], na.rm = TRUE))
+                   median(pheno_adm[pheno_adm$Q2.1 > 0.75, i], na.rm = TRUE))
   mean_adm1 <- c(mean_adm1,
-                 mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, i], na.rm = TRUE))
+                 mean(pheno_adm[pheno_adm$Q2.1 > 0.75, i], na.rm = TRUE))
   sd_adm1 <- c(sd_adm1,
-               sd(pheno_adm[pheno_adm$Q2.2 >= 0.75, i], na.rm = TRUE))
+               sd(pheno_adm[pheno_adm$Q2.1 > 0.75, i], na.rm = TRUE))
 }
 
 pheno_means <- data.frame(phenotype = phenos,
@@ -119,12 +106,11 @@ write.csv(pheno_means,
           row.names = FALSE)
 
 # phenotype stats difference between adm groups ---------------------------
-# phenotypes
 
 outfile <- "data/clean/phenotype_admGroups2575_statistical_difference.txt"
 
 # normally distributed:
-phenos <- c("Dsum", "pist")
+phenos <- c("pist.tube.ratio")
 for (thispheno in phenos) {
   cat("####    ####",
       file = outfile,
@@ -134,8 +120,8 @@ for (thispheno in phenos) {
       file = outfile,
       append = TRUE,
       sep = "\n")
-  capture.output(t.test(pheno_adm[pheno_adm$Q2.2 <= 0.25, thispheno],
-                        pheno_adm[pheno_adm$Q2.2 >= 0.75, thispheno],
+  capture.output(t.test(pheno_adm[pheno_adm$Q2.1 < 0.25, thispheno],
+                        pheno_adm[pheno_adm$Q2.1 > 0.75, thispheno],
                         alternative = "two.sided"),
                  file = outfile,
                  append = TRUE)
@@ -153,184 +139,134 @@ for (thispheno in phenos) {
       file = outfile,
       append = TRUE,
       sep = "\n")
-  capture.output(wilcox.test(pheno_adm[pheno_adm$Q2.2 <= 0.25, thispheno],
-                             pheno_adm[pheno_adm$Q2.2 >= 0.75, thispheno],
+  capture.output(wilcox.test(pheno_adm[pheno_adm$Q2.1 < 0.25, thispheno],
+                             pheno_adm[pheno_adm$Q2.1 > 0.75, thispheno],
                              alternative = "two.sided"),
                  file = outfile,
                  append = TRUE)
 }
 
-# Phenotype distributions --------------------------------------------------
-## anthocyanin
-pdf(paste0("figures/exploratory/phenotype/density_antho_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-plot(density(pheno_adm[ , "antho"], na.rm = T), main = "")
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "antho"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "antho"], na.rm = TRUE)),
-       col = c( "grey", "#e6002e"))
-dev.off()
-## flavonols
-pdf(paste0("figures/exploratory/phenotype/density_flav_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-plot(density(pheno_adm[ , "flav"], na.rm = T), main = "")
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "flav"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "flav"], na.rm = TRUE)),
-       col = c("grey", "#e6002e"))
-dev.off()
-## tube length
-pdf(paste0("figures/exploratory/phenotype/density_tube_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-plot(density(pheno_adm[ , "Dsum"], na.rm = T), main = "")
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "Dsum"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "Dsum"], na.rm = TRUE)),
-       col = c("grey", "#e6002e"))
-dev.off()
-## pistil length
-pdf(paste0("figures/exploratory/phenotype/density_pist_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-plot(density(pheno_adm[ , "pist"], na.rm = T), main = "")
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "pist"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "pist"], na.rm = TRUE)),
-       col = c("grey", "#e6002e"))
-dev.off()
-
-# plot histograms
-## anthocyanin
-pdf(paste0("figures/exploratory/phenotype/histogram_antho_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-hist(pheno_adm[ , "antho"],
-     breaks = 20)
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "antho"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "antho"], na.rm = TRUE)),
-       col = c( "grey", "#e6002e"))
-dev.off()
-## flavonols
-pdf(paste0("figures/exploratory/phenotype/histogram_flav_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-hist(pheno_adm[ , "flav"],
-     breaks = 20)
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "flav"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "flav"], na.rm = TRUE)),
-       col = c("grey", "#e6002e"))
-dev.off()
-## tube length
-pdf(paste0("figures/exploratory/phenotype/histogram_tube_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-hist(pheno_adm[ , "Dsum"],
-     breaks = 20)
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "Dsum"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "Dsum"], na.rm = TRUE)),
-       col = c("grey", "#e6002e"))
-dev.off()
-## pistil length
-pdf(paste0("figures/exploratory/phenotype/histogram_pist_mean.pdf"),
-    width = 3.25,
-    height = 3.15)
-hist(pheno_adm[ , "pist"],
-     breaks = 20)
-abline(v = c(mean(pheno_adm[pheno_adm$Q2.2 >= 0.75, "pist"], na.rm = TRUE),
-             mean(pheno_adm[pheno_adm$Q2.2 <= 0.25, "pist"], na.rm = TRUE)),
-       col = c("grey", "#e6002e"))
-dev.off()
-
-# phenotype to admixture scatter plots --------------------------------------------
-pdf("figures/exploratory/phenotype/scatter_admixture_flav.pdf",
-    width = 4,
-    height = 4)
-plot(pheno_adm$Q2.1,
-     pheno_adm$flav,
-     pch = 16,
-     cex = 0.7,
-     col = "black",
-     xlab = "Admixture proportion",
-     ylab = "Trait value",
-     ylim = c(10, 120))
-dev.off()
-pdf("figures/exploratory/phenotype/scatter_admixture_antho.pdf",
-    width = 4,
-    height = 4)
-plot(pheno_adm$Q2.1,
-     pheno_adm$antho,
-     pch = 16,
-     cex = 0.7,
-     col = "black",
-     xlab = "Admixture proportion",
-     ylab = "Trait value",
-     ylim = c(0, 63))
-dev.off()
-pdf("figures/exploratory/phenotype/scatter_admixture_pistil.pdf",
-    width = 4,
-    height = 4)
-plot(pheno_adm$Q2.1,
-     pheno_adm$pist,
-     pch = 16,
-     cex = 0.7,
-     col = "black",
-     xlab = "Admixture proportion",
-     ylab = "Trait value",
-     ylim = c(3.8, 6.2))
-dev.off()
-pdf("figures/exploratory/phenotype/scatter_admixture_tube.pdf",
-    width = 4,
-    height = 4)
-plot(pheno_adm$Q2.1,
-     pheno_adm$Dsum,
-     pch = 16,
-     cex = 0.7,
-     col = "black",
-     xlab = "Admixture proportion",
-     ylab = "Trait value",
-     ylim = c(3.3, 5.7))
-dev.off()
-
-#boxplot
+# phenotype in admixture boxplots -----------------------------------------
 adm_pure <- rep(NA, times = 70)
-adm_pure[pheno_adm$Q2.1 <= 0.25] <- "<= 0.25"
-adm_pure[pheno_adm$Q2.1 >= 0.75] <- ">= 0.75"
+adm_pure[pheno_adm$Q2.1 < 0.25] <- "< 0.25"
+adm_pure[pheno_adm$Q2.1 > 0.75] <- "> 0.75"
 pheno_adm$pure_groups <- adm_pure
 pheno_adm$pure_groups <- as.factor(pheno_adm$pure_groups)
 
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_flav.pdf",
-    width = 3,
+pdf("figures/exploratory/phenotype/boxplot_admixture2575_flav_thin.pdf",
+    width = 2,
     height = 4)
 boxplot(pheno_adm$flav ~ pheno_adm$pure_groups,
         col = c("#a2a2a2","#e6002e"),
         xlab = "Admixture proportion",
-        ylab = "Trait value",
-        ylim = c(10, 120))
+        ylab = "Trait value")
 dev.off()
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_antho.pdf",
-    width = 3,
+pdf("figures/exploratory/phenotype/boxplot_admixture2575_antho_thin.pdf",
+    width = 2,
     height = 4)
 boxplot(pheno_adm$antho ~ pheno_adm$pure_groups,
         col = c("#a2a2a2","#e6002e"),
         xlab = "Admixture proportion",
-        ylab = "Trait value",
-        ylim = c(0, 63))
+        ylab = "Trait value")
 dev.off()
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_pistil.pdf",
-    width = 3,
+pdf("figures/exploratory/phenotype/boxplot_admixture2575_pist.tube.ratio_thin.pdf",
+    width = 2,
     height = 4)
-boxplot(pheno_adm$pist ~ pheno_adm$pure_groups,
+boxplot(pheno_adm$pist.tube.ratio ~ pheno_adm$pure_groups,
         col = c("#a2a2a2","#e6002e"),
         xlab = "Admixture proportion",
-        ylab = "Trait value",
-        ylim = c(3.8, 6.2))
-dev.off()
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_tube.pdf",
-    width = 3,
-    height = 4)
-boxplot(pheno_adm$Dsum ~ pheno_adm$pure_groups,
-        col = c("#a2a2a2","#e6002e"),
-        xlab = "Admixture proportion",
-        ylab = "Trait value",
-        ylim = c(3.3, 5.7))
+        ylab = "Trait value")
 dev.off()
 
+# Phenotype correlation to principal components ---------------------------
+# I test phenotype correlation to the first 10 genomic principal components.
+
+# import PCA data
+covmat <- read.table("data/raw/pca/cr09_mm005.cov")
+# the eigen vector of the covariance matrix:
+e <- eigen(covmat)
+# the variance explained by each PC:
+PCperc <- round(e$values/sum(e$values) * 100, digits = 2)
+PCperc[1:10]
+
+# take first 10 PCs
+pcs1.10 <- e$vectors[, 1:10]
+# sort pheno df as the PCA
+pheno_adm <- pheno_adm[order(pheno_adm$id_gl), ]
+
+# list the variables that I want to have in the correlation matrix
+phenotypes <- c("pist.tube.ratio",
+                "flav", "antho")
+
+# make one matrix to keep the correlation estimate value
+estimates_mt <- matrix(data = 999, nrow = length(phenotypes), ncol = 10)
+# and one to keep the corresponding P values
+pvals_mt <- matrix(data = 999, nrow = length(phenotypes), ncol = 10)
+
+# loop through the phenotypes and calculate their correlation with each PC
+for ( thispheno in phenotypes ) {
+  test <- apply(X = pcs1.10, 
+                MARGIN = 2, 
+                function(x) cor.test(as.numeric(pheno_adm[ , thispheno]), x))
+  estimates <- sapply(test, "[[", "estimate")
+  pvals <- sapply(test, "[[", "p.value")
+  estimates_mt[match(thispheno, phenotypes), ] <- estimates
+  pvals_mt[match(thispheno, phenotypes), ] <- pvals
+}
+# name rows and cols of the matrices
+colnames(estimates_mt) <- paste0("PC", 1:10)
+rownames(estimates_mt) <- phenotypes
+colnames(pvals_mt) <- paste0("PC", 1:10)
+rownames(pvals_mt) <- phenotypes
+
+# apply Bonferroni correction to the P values by multiplying the P values
+# by the number of comparisons performed
+pvals_bonf_mt <- pvals_mt * ( length(phenotypes) * 10 )
+
+# make the matrices into a long df
+estimates_mt.long <- melt(estimates_mt)
+pvals_mt.long <- melt(pvals_mt)
+pvals_bonf_mt.long <- melt(pvals_bonf_mt)
+corr_PCpheno <- merge.data.frame(estimates_mt.long, pvals_mt.long, by = c("Var1", "Var2"))
+corr_PCpheno <- merge.data.frame(corr_PCpheno, pvals_bonf_mt.long, by = c("Var1", "Var2"))
+colnames(corr_PCpheno) <- c("Variable1", "Variable2", "Pearson_r2", "Pvalue", "Bonferroni_Pvalue")
+
+# add a column to code significance of Bonferroni corrected P values
+corr_PCpheno$bonf_signif <- "na"
+corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue < 0.01] <- "**"
+corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue < 0.05 &
+                           corr_PCpheno$Bonferroni_Pvalue >= 0.01 ] <- "*"
+corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue >= 0.05] <- "n.s."
+
+pl <- ggplot(data = corr_PCpheno,
+             aes(Variable1, Variable2)) +
+  geom_tile(aes(fill = Pearson_r2),
+            colour = "white") +        # adds the thin white line bw cells
+  scale_fill_gradient2(low = "red", mid = "white", high = "blue") +
+  geom_text(aes(label = bonf_signif)) +
+  xlab("Phenotypic trait") +
+  ylab("PC component") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) 
+ggsave("figures/exploratory/phenotype/correlogram_PCTopheno.png",
+       plot = pl,
+       width = 8, height = 5)
+pl
+
+# save the results to a readable csv. These are the results reported in
+# Additional file 1, table S2
+write.csv(x = corr_PCpheno, 
+          file = "data/raw/phenotype/correlation_PCPheno.csv", 
+          quote = FALSE, 
+          row.names = FALSE)
+
+rm(estimates_mt, 
+   estimates_mt.long, 
+   pvals_bonf_mt, 
+   pvals_bonf_mt.long, 
+   pvals_mt, 
+   pvals_mt.long, 
+   test,
+   thispheno,
+   pvals,
+   estimates)
