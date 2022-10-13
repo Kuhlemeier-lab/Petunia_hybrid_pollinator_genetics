@@ -13,8 +13,8 @@ library(RcppCNPy)
 library(calibrate)
 library(scales)
 
-knitr::opts_knit$set(root.dir = "/xxx/hybrids_peaxiINV/")
-knitr::opts_chunk$set(root.dir = "/xxx/hybrids_peaxiINV/")
+knitr::opts_knit$set(root.dir = "/xxx/hybrids/")
+knitr::opts_chunk$set(root.dir = "/xxx/hybrids/")
 
 ```
 
