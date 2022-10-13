@@ -4,14 +4,14 @@
 # Created 05/05/2021
 # Last modified 19/04/2022
 
-setwd("/xxx/hybrids_peaxiINV/")
+setwd("/xxx/hybrids/")
 
 library(ggplot2)
 library(IRanges)
 library(GenomicRanges)
 
 # The input files were obtained with the tool covtobed https://github.com/telatin/covtobed
-# selecting minuimum coverage 100.
+# selecting minimum coverage 100.
 # These files have coordinated in bed format, meaning that the stop coordinate
 # is non-inclusive.
 
