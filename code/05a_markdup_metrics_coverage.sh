@@ -20,13 +20,13 @@
 ##SBATCH --qos=job_epyc2_debug
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/05a_markdup_metrics_coverage_%A_%a.out
 #SBATCH --error=code/05a_markdup_metrics_coverage_%A_%a.err
 
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Mark duplicates and index bam files, calculate some stats, get regions with coverage > 100
 ## `date`
@@ -78,7 +78,7 @@ picard-tools CollectWgsMetrics \
 echo -e "calculate wgs metris only on gene space"
 # I have to make a picard interval list file
 # first I get the header for the file
-grep -P "(@SQ)|(@HD)" ${scdir}/data/genomes/Peax402INV.dict > ${scdir}/data/genomes/Peax402INV.gene${SLURM_ARRAY_TASK_ID}.picardlist
+grep -P "(@SQ)|(@HD)" ${scdir}/data/genomes/Peax403.dict > ${scdir}/data/genomes/Peax403.gene${SLURM_ARRAY_TASK_ID}.picardlist
 # extract gene regions into a picard interval list file
 
 ln -s /xxx/Peax403.cds.gff ${scdir}/data/genomes/Peax403.cds.gff
