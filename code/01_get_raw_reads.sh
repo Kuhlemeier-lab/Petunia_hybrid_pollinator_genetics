@@ -22,8 +22,8 @@
 #SBATCH --error=code/01_get_raw_reads_%A.err
  
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### get raw reads from SRA
 ## `date`
