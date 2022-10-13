@@ -15,12 +15,12 @@
 # Partition
 #SBATCH --partition=epyc2
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/08_genotype_gvcfs_quality_%A.out
 #SBATCH --error=code/08_genotype_gvcfs_quality_%A.err
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Genotype gvcf file
 ## `date`
