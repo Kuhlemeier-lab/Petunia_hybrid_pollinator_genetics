@@ -15,12 +15,12 @@
 #SBATCH --partition=epyc2
 
 #SBATCH --account=ips_ck
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/13c_gwas_bslmm_%A.out
 #SBATCH --error=code/13c_gwas_bslmm_%A.err
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 # use this local version of gemma:
 gemma=/xxx/tools/gemma-0.98.4-linux-static-AMD64
@@ -56,7 +56,7 @@ $gemma -g ${gt_data} \
 pval=4
 echo -e "\nLM\n"
 # LM with no covariates:
-for i in {1..4}; do
+for i in {1..3}; do
     pheno_idx=$i
     echo "phenotype ${pheno_idx}"
     echo ${dataset}
@@ -77,7 +77,7 @@ done
 pval=4
 echo -e "\nLMM\n"
 # LMM with no covariates:
-for i in {1..4}; do
+for i in {1..3}; do
     pheno_idx=$i
     echo "phenotype ${pheno_idx}"
     echo ${dataset}
@@ -102,7 +102,7 @@ pheno_file=${scdir}/data/raw/gwas/pheno_gwas.bimbam
 
 # standard linear BSLMM 
 # loop through phenotypes
-for i in {1..4}; do
+for i in {1..3}; do
     pheno_idx=${i}
     echo "phenotype ${pheno_idx}"
     model_idx=1
