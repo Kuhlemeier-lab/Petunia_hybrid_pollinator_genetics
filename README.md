@@ -1,6 +1,6 @@
 # Genetic architecture of a pollinator shift and its fate in secondary contact zones in two *Petunia* plant species
 
-Bioinformatic analyses performed in the experiments for the publication about the genetic basis of pollination syndromes in Petunia axillaris and P. exserta.
+Bioinformatic analyses performed in the experiments for the publication about the genetic basis of pollination syndromes in *Petunia axillaris* and *P. exserta*.
 
 **Add ref to paper**
 
@@ -20,11 +20,13 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods.
 
-The figures showing the distribution of the phenotypes and the difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R). The same script also performs a normality test.
+The figures showing the boxplots of the phenotype values and the statistical difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R). The same script also performs a normality test.
 
 ## Pipeline
 
-All analyses were performed on the reference genome sequence of P. axillaris N version 4.03 available on NCBI GenBank under the accession JANRMM000000000 (submission accepted, currently being processed by NCBI).
+All analyses were performed on the reference genome sequence of *P. axillaris* N version 4.03 available on NCBI GenBank under the accession JANRMM000000000 (submission accepted, currently being processed by NCBI).
+
+Software versions and versions of R libraries are listed at the bottom of this page.
 
 ### Read preparation
 
@@ -89,13 +91,13 @@ python code/ngsadmix_outparser.py -p data/raw/admixture
 
 The results are then analysed in R with script [11b_ngsadmix.R](code/11b_ngsadmix.R).
 
-In the R script we also produce a text file that holds the individual IDs of plants in each admixture group for K = 2, with groups defined as group 1 >= 0.75 and group 2 <= 0.25. The resulting file is later used to divide the variant file into two files one per admixture group.
+In the R script we also produce a text file that holds the individual IDs of plants in each admixture group for K = 2, with groups defined as group 1 > 0.75 and group 2 < 0.25. The resulting file is later used to divide the variant file into two files one per admixture group.
 
 ### Genomic PCA analysis
 
 Is performed with pcangsd version 1.10, using `--minMaf 0` and one thread. Note that I use one thread because some tools of ANGSD mess up the positions in the file if you multithread. Script is [12a_pcangsd.sh](code/12a_pcangsd.sh).
 
-The results are analysed and plotted with the Rmd script [12b_pcangsd.Rmd](code/12b_pcangsd.Rmd), for which the output is available in [12b_pcangsd.html](code/12b_pcangsd.html).
+The results are analysed and plotted with the Rmd script [12b_pcangsd.Rmd](code/12b_pcangsd.Rmd).
 
 
 ### Genetic architecture prediction and GWAS
@@ -115,7 +117,7 @@ Each phenotypic trait is assigned an integer in order to be able to loop through
 I then use the genotype hardfiltered_biallelic_cr09_mm005.bimbam.gz and phenotype [pheno_gwas.bimbam](data/pheno_gwas.bimbam) input files to perform the association analyses and the estimation of the genetic architecture. This is done with script [13c_gwas_bslmm.sh](code/13c_gwas_bslmm.sh).
 
 Briefly, we first calculate the kinship matrix with GEMMA, using option `-gk 1` which calculates a centred relatedness matrix.
-We then do the association analyses for each of the four phenotypic traits considered (pistil and tube length, anthocyanin and flavonol content), applying first a linear model (LM) with option `-lm 4`, and then a linear mixed model (LMM) `-lmm 4` which includes a correction for relatedness.
+We then do the association analyses for each of the three phenotypic traits considered (pistil exsertion, anthocyanin and flavonol content), applying first a linear model (LM) with option `-lm 4`, and then a linear mixed model (LMM) `-lmm 4` which includes a correction for relatedness.
 All of these analyses are performed with options `-hwe 0.001 -miss 0 -maf 0`.
 
 We then apply the bayesian sparse linear mixed model (BSLMM) to estimate the genetic architecture of each phenotypic trait. This is done with options:
@@ -131,14 +133,12 @@ We then apply the bayesian sparse linear mixed model (BSLMM) to estimate the gen
 -wpace 10000000
 ```
 
-The output of all analyses is analysed in script **to fix** [13d_gemma.Rmd](code/13d_gemma.Rmd). In this script, part of the analysis of the BSLMM is adapted from a lecture of Victor Soria-Carrasco from the University of Sheffield. The complete tutorial can be found here:
+The output of all analyses is analysed in script [13d_gemma.Rmd](code/13d_gemma.Rmd). In this script, part of the analysis of the BSLMM is adapted from a lecture of Victor Soria-Carrasco from the University of Sheffield. The complete tutorial can be found here:
 http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf
 
-The script also uses some functions from a file that is sourced at the beginning of the Rmd, it's **to fix** [13_gwas_functions.R](code/13_gwas_functions.R).
+The script also uses some functions from a file that is sourced at the beginning of the Rmd, it's [13_gwas_functions.R](code/13_gwas_functions.R).
 
-The output is [13d_gemma.html](code/13d_gemma.html).
-
-The plots displayed in the publication are obtained with script [13e_plot_gwas.R](code/13e_plot_gwas.R).
+The manhattan plots in the main figure displayed in the publication are obtained with script [13e_plot_gwas.R](code/13e_plot_gwas.R).
 
 
 ### Divergence scan
