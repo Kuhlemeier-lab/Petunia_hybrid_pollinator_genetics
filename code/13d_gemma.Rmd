@@ -23,13 +23,9 @@ library(data.table)
 library(ggplot2)
 library(scales)
 
-# windows SUCKS so I cannot work with long filenames on the nas.
-#knitr::opts_knit$set(root.dir = "/home/marta/doc/hybrids_peaxiINV_RMD/")
-#knitr::opts_chunk$set(root.dir = "/home/marta/doc/hybrids_peaxiINV_RMD/")
-
-knitr::opts_knit$set(root.dir = "/media/ipsnas/Groups/Deve/Current lab members/marta/hybrids_peaxiINV/")
-knitr::opts_chunk$set(root.dir = "/media/ipsnas/Groups/Deve/Current lab members/marta/hybrids_peaxiINV/")
-source("/media/ipsnas/Groups/Deve/Current lab members/marta/hybrids_peaxiINV/code/13_gwas_functions.R")
+knitr::opts_knit$set(root.dir = "/xxx/hybrids/")
+knitr::opts_chunk$set(root.dir = "/xxx/hybrids/")
+source("/xxx/hybrids/code/13_gwas_functions.R")
 ```
 
 # Introduction
