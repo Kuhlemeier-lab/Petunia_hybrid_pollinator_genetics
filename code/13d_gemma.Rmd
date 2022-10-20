@@ -134,9 +134,9 @@ The BSLMM analysis with GEMMA produces several files:
 * basename.param.txt -> posterior samples of parameters
 
 ```{r}
-basenames <- c("hardfiltered_biallelic_cr09_mm005_pheno3_bslmm1",
-               "hardfiltered_biallelic_cr09_mm005_pheno4_bslmm1",
-               "hardfiltered_biallelic_cr09_mm005_pheno5_bslmm1")
+basenames <- c("hardfiltered_biallelic_cr09_mm005_pheno1_bslmm1",
+               "hardfiltered_biallelic_cr09_mm005_pheno2_bslmm1",
+               "hardfiltered_biallelic_cr09_mm005_pheno3_bslmm1")
 ```
 
 #### Hyperparameters 
@@ -247,8 +247,8 @@ To be able to compare the P values I store them in a separate df, qqdf.
 
 Read results and make plots.
 
-```{r lm4_pheno3}
-basename <- "hardfiltered_biallelic_cr09_mm005_pheno3_lm4"
+```{r lm4_pheno1}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno1_lm4"
 assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
                     header = T,
                     as.is = "rs")
@@ -256,7 +256,7 @@ assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
 p <- "p_lrt"
 qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
 mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.05, correct = TRUE)}
-png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno3_", p, ".png"),
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno1_", p, ".png"),
     width = 1600, height = 300)
 layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
 qq()
@@ -283,8 +283,8 @@ qqdf <- data.frame(phenotype = rep("Pistil-tube ratio", times = length(y)),
 
 Read results and plot.
 
-```{r lm4_pheno4}
-basename <- "hardfiltered_biallelic_cr09_mm005_pheno4_lm4"
+```{r lm4_pheno2}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno2_lm4"
 assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
                     header = TRUE,
                     as.is = "rs")
@@ -292,7 +292,7 @@ assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
 p <- "p_lrt"
 qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
 mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.05, correct = TRUE)}
-png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno4_", p, ".png"),
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno2_", p, ".png"),
     width = 1600, height = 300)
 layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
 qq()
@@ -320,8 +320,8 @@ rm(tmp)
 
 Read results and plot.
 
-```{r lm4_pheno5}
-basename <- "hardfiltered_biallelic_cr09_mm005_pheno5_lm4"
+```{r lm4_pheno3}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno3_lm4"
 assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
                     header = T,
                     as.is = "rs")
@@ -329,7 +329,7 @@ assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
 p <- "p_lrt"
 qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
 mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.05, correct = TRUE)}
-png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno5_", p, ".png"),
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lm_pheno3_", p, ".png"),
     width = 1600, height = 300)
 layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
 qq()
@@ -357,8 +357,8 @@ rm(tmp)
 
 ### Pistil exsertion
 
-```{r lmm4_pheno3}
-basename <- "hardfiltered_biallelic_cr09_mm005_pheno3_lmm4"
+```{r lmm4_pheno1}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno1_lmm4"
 assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
                     header = T,
                     as.is = "rs")
@@ -366,7 +366,7 @@ assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
 p <- "p_lrt"
 qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
 mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.05, correct = TRUE)}
-png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno3_", p, ".png"),
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno1_", p, ".png"),
     width = 1600, height = 300)
 layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
 qq()
@@ -392,8 +392,8 @@ rm(tmp)
 
 ### Flavonol content
 
-```{r lmm4_pheno4}
-basename <- "hardfiltered_biallelic_cr09_mm005_pheno4_lmm4"
+```{r lmm4_pheno2}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno2_lmm4"
 assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
                     header = TRUE,
                     as.is = "rs")
@@ -401,7 +401,7 @@ assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
 p <- "p_lrt"
 qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
 mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.05, correct = TRUE)}
-png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno4_", p, ".png"),
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno2_", p, ".png"),
     width = 1600, height = 300)
 layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
 qq()
@@ -427,8 +427,8 @@ rm(tmp)
 
 ### Anthocyanin content
 
-```{r lmm4_pheno5}
-basename <- "hardfiltered_biallelic_cr09_mm005_pheno5_lmm4"
+```{r lmm4_pheno3}
+basename <- "hardfiltered_biallelic_cr09_mm005_pheno3_lmm4"
 assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
                     header = T,
                     as.is = "rs")
@@ -436,7 +436,7 @@ assoc_df <- read.table(paste0("data/raw/gwas/output/", basename, ".assoc.txt"),
 p <- "p_lrt"
 qq <- function() {myqqplot(assoc_df, p = p, paste0(basename, "_", p))}
 mh <- function() {manhattan(assoc_df, pval = p, paste0(basename, "_", p), 0.05, correct = TRUE)}
-png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno5_", p, ".png"),
+png(paste0("figures/exploratory/gwas/plot_qq_manhattan_lmm_pheno3_", p, ".png"),
     width = 1600, height = 300)
 layout(matrix(c(1,2,2), 1, 3, byrow = TRUE))
 qq()
