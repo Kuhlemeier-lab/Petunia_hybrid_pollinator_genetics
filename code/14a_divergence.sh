@@ -15,12 +15,12 @@
 #SBATCH --partition=epyc2
 ##SBATCH --qos=job_epyc2_debug
 #SBATCH --account=xxx
-#SBATCH --chdir=/xxx/hybrids_peaxiINV
+#SBATCH --chdir=/xxx/hybrids
 #SBATCH --output=code/14a_divergence_%A.out
 #SBATCH --error=code/14a_divergence_%A.err
 #################################
-chdir=/xxx/hybrids_peaxiINV
-scdir=/xxx/hybrids_peaxiINV
+chdir=/xxx/hybrids
+scdir=/xxx/hybrids
 
 echo -e "#### Fst from ANGSD
 ## `date`
@@ -39,7 +39,7 @@ then
 fi 
 
 # reference genome
-genome=${scdir}/data/genomes/Peax402INV.fasta
+genome=${scdir}/data/genomes/Peax403.fasta
 
 # using this dataset:
 base_vcf=${scdir}/data/raw/variants/hardfiltered_biallelic_cr09_mm005.recode.vcf
@@ -91,15 +91,7 @@ ${angsddir}/angsd \
 #realSFS check ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_2.saf.idx 
 #${angsdDir}/misc/realSFS check ${scdir}/data/raw/fst/
 
-# calculate 2dsfs prior, folded
-${angsddir}/misc/realSFS \
-  -P 1 \
-  -fold 1 \
-  -maxIter 50000 \
-  -tole 0.00001 \
-  ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_1.saf.idx \
-  ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_2.saf.idx > ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_folded.ml
- calculate 2d sfs prior, unfolded
+# calculate 2d sfs prior, unfolded
 ${angsddir}/misc/realSFS \
   -P 1 \
   -maxIter 50000 \
@@ -107,13 +99,6 @@ ${angsddir}/misc/realSFS \
   ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_1.saf.idx \
   ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_2.saf.idx > ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_unfolded.ml
 
-# calculate fst, folded
-${angsddir}/misc/realSFS fst index \
-  ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_1.saf.idx \
-  ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_2.saf.idx \
-  -sfs ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_folded.ml \
-  -fstout ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_folded \
-  -P 1
 # calculate fst, unfolded
 ${angsddir}/misc/realSFS fst index \
   ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_1.saf.idx \
@@ -123,17 +108,7 @@ ${angsddir}/misc/realSFS fst index \
   -P 1
 
 # get global estimate
-${angsddir}/misc/realSFS fst stats ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_folded.fst.idx -P 1
 ${angsddir}/misc/realSFS fst stats ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_unfolded.fst.idx -P 1
-# 50kb window, 25kb step
-${angsddir}/misc/realSFS fst stats2 ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_folded.fst.idx \
-  -P 1 \
-  -win 50000 \
-  -step 25000 > ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_folded_slidingwindow50kb25kb
-${angsddir}/misc/realSFS fst stats2 ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_unfolded.fst.idx \
-  -P 1 \
-  -win 50000 \
-  -step 25000 > ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_unfolded_slidingwindow50kb25kb
 # 200 kb window, 100 kb step
 ${angsddir}/misc/realSFS fst stats2 ${scdir}/data/raw/fst/hf_ba_cr09_mm005_admixture_unfolded.fst.idx \
   -P 1 \
