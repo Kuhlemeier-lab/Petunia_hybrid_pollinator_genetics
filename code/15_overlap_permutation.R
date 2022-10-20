@@ -7,7 +7,7 @@
 # https://doi.org/10.1093/bioinformatics/btv562
 
 
-workdir <- "/xxx/hybrids_peaxiINV/"
+workdir <- "/xxx/hybrids/"
 setwd(workdir)
 
 library(regioneR) 
@@ -20,7 +20,7 @@ outfile <- "data/raw/overlap_gwas_divergence_200kbFst.txt"
 
 # import genome info ------------------------------------
 # genome info from fasta fai
-genome_raw <- read.table("data/genome/Peax402INV.fasta.fai", sep = "\t", header = FALSE,
+genome_raw <- read.table("data/genome/Peax403.fasta.fai", sep = "\t", header = FALSE,
                          stringsAsFactors = FALSE)
 genome <- getGenome(genome_raw[ , 1:2])
 
@@ -107,9 +107,8 @@ rm(selectedFst.chr, thisfs)
 
 # loop through the different phenotypes
 
-for (pheno in 1:4) {
+for (pheno in 1:3) {
   # import GWAS lmm --------------------------------------------------------------
-  #pheno <- 3 # tube
   cat(paste0("####  phenotype ", pheno, "  ####"),
       file = outfile,
       append = TRUE,
@@ -239,36 +238,3 @@ for (pheno in 1:4) {
   }
   
 }
-
-
-# session info ------------------------------------------------------------
-
-sessionInfo()
-# R version 4.1.2 (2021-11-01)
-# Platform: x86_64-w64-mingw32/x64 (64-bit)
-# Running under: Windows 10 x64 (build 19044)
-# 
-# Matrix products: default
-# 
-# locale:
-#   [1] LC_COLLATE=Italian_Italy.1252  LC_CTYPE=Italian_Italy.1252    LC_MONETARY=Italian_Italy.1252
-# [4] LC_NUMERIC=C                   LC_TIME=Italian_Italy.1252    
-# 
-# attached base packages:
-#   [1] stats4    stats     graphics  grDevices utils     datasets  methods   base     
-# 
-# other attached packages:
-#   [1] regioneR_1.26.1      GenomicRanges_1.46.1 GenomeInfoDb_1.30.1  IRanges_2.28.0       S4Vectors_0.32.3    
-# [6] BiocGenerics_0.40.0 
-# 
-# loaded via a namespace (and not attached):
-#   [1] compiler_4.1.2              restfulr_0.0.13             XVector_0.34.0              MatrixGenerics_1.6.0       
-# [5] bitops_1.0-7                tools_4.1.2                 zlibbioc_1.40.0             memoise_2.0.1              
-# [9] BSgenome_1.62.0             lattice_0.20-45             rlang_1.0.1                 Matrix_1.4-0               
-# [13] DelayedArray_0.20.0         cli_3.1.1                   rstudioapi_0.13             yaml_2.2.2                 
-# [17] parallel_4.1.2              fastmap_1.1.0               GenomeInfoDbData_1.2.7      rtracklayer_1.54.0         
-# [21] Biostrings_2.62.0           grid_4.1.2                  Biobase_2.54.0              XML_3.99-0.8               
-# [25] BiocParallel_1.28.3         Rsamtools_2.10.0            matrixStats_0.61.0          GenomicAlignments_1.30.0   
-# [29] SummarizedExperiment_1.24.0 RCurl_1.98-1.6              cachem_1.0.6                crayon_1.5.0               
-# [33] rjson_0.2.21                BiocIO_1.4.0 
-
