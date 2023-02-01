@@ -18,7 +18,7 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 ## Phenotype data
 
-The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods.
+The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods. For details on the headers of the table, see [phenotype_header_info.csv](data/phenotype_header_info.csv).
 
 The figures showing the boxplots of the phenotype values and the statistical difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R). The same script also performs a normality test.
 
