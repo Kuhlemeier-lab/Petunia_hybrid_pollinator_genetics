@@ -1,0 +1,20 @@
+column,meaning
+new_id_short,sequential ID of the individuals
+original_id,original ID of the individual
+parental,ID of the mother plant
+plant,ID of the plant
+n,number of flowers measured
+colour,corolla visible colour as scored by human eye (not used in the analyses)
+uv,"corolla UV colour as scored by human eye via UV pictures (a = absorbent, r = reflective, not used in the analyses)"
+D1,average of the length (cm) of the section D1 of the corolla tube (see Methods)
+D1_sd,standard deviation of the length (cm) of the section D1 of the corolla tube (see Methods)
+D2,average of the length (cm) of the section D2 of the corolla tube (see Methods)
+D2_sd,standard deviation of the length (cm) of the section D2 of the corolla tube (see Methods)
+Dsum,sum of the D1 and D2 section
+Dsum_sd,standard deviation of the sum of D1 and D2 (sum was performed flower-wise)
+pist,average of the length (cm) of the pistil (see Methods)
+pistil_sd,standard deviation of the length (cm) of the pistil (see Methods)
+flav,"average of the flavonol content (absorbance unit, see Methods)"
+flavonol_sd,"standard deviation of the flavonol content (absorbance unit, see Methods)"
+antho,"average of the anthocyanin content (absorbance unit, see Methods)"
+antho_sd,"standard deviation of the anthocyanin content (absorbance unit, see Methods)"
