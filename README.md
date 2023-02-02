@@ -1,4 +1,4 @@
-# Genetic architecture of a pollinator shift and its fate in secondary contact zones in two *Petunia* plant species
+# Genetic architecture of a pollinator shift and its fate in secondary hybrid zones of two *Petunia* species
 
 Bioinformatic analyses performed in the experiments for the publication about the genetic basis of pollination syndromes in *Petunia axillaris* and *P. exserta*.
 
@@ -20,11 +20,13 @@ Raw reads were uploaded to NCBI SRA under [BioProjects PRJNA522653 (2016 batch)]
 
 The phenotype of the plants was collected and is available in file [phenotype_sequenced_individuals.csv](data/phenotype_sequenced_individuals.csv). For more details on how the phenotypic traits were measured see the publication methods. For details on the headers of the table, see [phenotype_header_info.csv](data/phenotype_header_info.csv).
 
-The figures showing the boxplots of the phenotype values and the statistical difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R). The same script also performs a normality test.
+The figures showing the violin plots of the phenotype values and the statistical difference between admixture groups are produced with the script [phenotype_analyses_plots.R](code/phenotype_analyses_plots.R). The same script also performs a normality test, and plots the correlation between phenotypes and the correlation between phenotypes and admixture proportions.
+
+We also genotyped MYB-FL in the individuals from one contact zones with CAPS markers, as described in Sheehan et al, 2016. The results of the genotyping are shown in file [genotype_mybfl_CAPS.csv](data/genotype_mybfl_CAPS.csv).
 
 ## Pipeline
 
-All analyses were performed on the reference genome sequence of *P. axillaris* N version 4.03 available on NCBI GenBank under the accession JANRMM000000000 (submission accepted, currently being processed by NCBI).
+All analyses were performed on the reference genome sequence of *P. axillaris* N version 4.03 available on NCBI GenBank under the accession [JANRMM000000000](https://www.ncbi.nlm.nih.gov/nuccore/JANRMM000000000).
 
 Software versions and versions of R libraries are listed at the bottom of this page.
 
@@ -91,7 +93,7 @@ python code/ngsadmix_outparser.py -p data/raw/admixture
 
 The results are then analysed in R with script [11b_ngsadmix.R](code/11b_ngsadmix.R).
 
-In the R script we also produce a text file that holds the individual IDs of plants in each admixture group for K = 2, with groups defined as group 1 > 0.75 and group 2 < 0.25. The resulting file is later used to divide the variant file into two files one per admixture group.
+In the R script we also produce a text file that holds the individual IDs of plants in each admixture group for K = 2, with groups defined as group 1 > 0.90 and group 2 < 0.10. The resulting file is later used to divide the variant file into two files one per admixture group.
 
 ### Genomic PCA analysis
 
@@ -145,7 +147,7 @@ The manhattan plots in the main figure displayed in the publication are obtained
 
 Is done by calculating a sliding window Fst with ANGSD, with script [14a_divergence.sh](code/14a_divergence.sh). Note that doSaf in multithreading seems to mix up positions between chromosomes, see issue in (https://github.com/ANGSD/angsd/issues/258), so I use only one thread.
 
-Briefly, to calculate Fst with ANGSD I divide the vcf files into two files with the individuals with admixture < 0.25 and one with > 0.75. I then do `-doSaf 1` and use realSFS to get the 2D sfs prior.  I then use realSFS to calculate the Fst and then use again realSFS to summarise by window.
+Briefly, to calculate Fst with ANGSD I divide the vcf files into two files with the individuals with admixture < 0.10 and one with > 0.90. I then do `-doSaf 1` and use realSFS to get the 2D sfs prior.  I then use realSFS to calculate the Fst and then use again realSFS to summarise by window.
 
 The results are then plotted with [14b_divergence.R](code/14b_divergence.R).
 
@@ -184,6 +186,7 @@ The library permits to provide a genome index file, and regions in two groups fo
 - data.table
 - dplyr
 - GenomicRanges
+- ggdist
 - ggplot2
 - Hmisc
 - IRanges
@@ -198,3 +201,4 @@ The library permits to provide a genome index file, and regions in two groups fo
 
 Bombarely Aureliano, Michel Moser, Avichai Amrad, Manzhu Bao, Laure Bapaume, Cornelius S. Barry, Mattijs Bliek, et al. 2016. ‘Insight into the Evolution of the Solanaceae from the Parental Genomes of Petunia Hybrida’. Nature Plants 2 (6): 16074. https://doi.org/10.1038/nplants.2016.74.
 
+Sheehan, Hester, Michel Moser, Ulrich Klahre, Korinna Esfeld, Alexandre Dell’Olivo, Therese Mandel, Sabine Metzger, Michiel Vandenbussche, Loreta Freitas, and Cris Kuhlemeier. 2016. ‘MYB-FL Controls Gain and Loss of Floral UV Absorbance, a Key Trait Affecting Pollinator Preference and Reproductive Isolation’. Nature Genetics 48 (2): 159–66. https://doi.org/10.1038/ng.3462.
