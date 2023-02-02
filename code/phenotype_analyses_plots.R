@@ -1,9 +1,9 @@
 # Phenotype descriptive stats, normality, correlation with genetic PCA.
 # 23/08/2021
-# Last modified 13/10/2022
+# Last modified 13/01/2023
 # Marta Binaghi
 
-wdir <- "hybrids/"
+wdir <- "hybrids"
 setwd(wdir)
 
 
@@ -11,6 +11,7 @@ setwd(wdir)
 library(corrplot)
 library(reshape2)
 library(ggplot2)
+library(ggdist) # plot with half violin
 
 # import data -------------------------------------------------------------
 pheno <- read.table("data/clean/phenotype_sequenced_individuals.csv",
@@ -30,6 +31,18 @@ pheno_adm <- merge.data.frame(pheno,
                               by.x = "new_id_short",
                               by.y = "id")
 
+
+# import genotype of mybfl -------------------------------------------------------
+# only available for contact zone 1
+mybfl <- read.table("data/raw/genotype_mybfl.csv",
+                    header = TRUE,
+                    sep = ",",
+                    stringsAsFactors = FALSE)
+pheno_adm_gt <- merge.data.frame(pheno_adm,
+                                 mybfl,
+                                 by.x = c("parental", "plant"),
+                                 by.y = c("parental", "plant"),
+                                 all.x = TRUE)
 
 # phenotype normality test ------------------------------------------------
 phenos <- c("antho", "flav", "pist.tube.ratio")
@@ -55,10 +68,90 @@ for (i in phenos) {
 pheno_adm$flav_rank <- rank(pheno_adm$flav, na.last = "keep")
 pheno_adm$antho_rank <- rank(pheno_adm$antho, na.last = "keep")
 
+# phenotype to phenotype correlation --------------------------------------
+# a comprehensive plot with flavonol by anthocyanin, size is exsertion
+ggplot(data = pheno,
+       aes(x = flav,
+           y = antho,
+           size = (pist.tube.ratio))) +
+  geom_point(alpha = 0.4, col = "gray20") +
+  theme_classic() +
+  scale_radius(#max_size = 5, trans = "exp"
+    #limits = c(0.8, 1.3)
+    range = c(0.8, 4))  +
+  #theme(legend.position = c(0.87, 0.25)) +
+  guides(size = guide_legend(label.position = "bottom")) +
+  theme(legend.position="bottom") +
+  xlab("Flavonol (AU)") +
+  ylab("Anthocyanin (AU)") +
+  labs(size = "Exsertion")
+ggsave("figures/exploratory/phenotype/scatter_flav_antho_exs.pdf",
+       width = 4.4,
+       height = 4.7)
+
+# flavonol by antho
+ggplot(data = pheno,
+       aes(x = flav,
+           y = antho)) +
+  geom_point(alpha = 0.4, col = "gray20", size = 0.5) +
+  theme_classic() +
+  xlab("Flavonol (AU)") +
+  ylab("Anthocyanin (AU)")
+ggsave("figures/exploratory/phenotype/scatter_flav_antho.pdf",
+       width = 2.2,
+       height = 4.7/3)
+# flavonol by exs
+ggplot(data = pheno,
+       aes(x = flav,
+           y = pist.tube.ratio)) +
+  geom_point(alpha = 0.4, col = "gray20", size = 0.5) +
+  theme_classic() +
+  xlab("Flavonol (AU)") +
+  ylab("Exsertion")
+ggsave("figures/exploratory/phenotype/scatter_flav_exs.pdf",
+       width = 2.3,
+       height = 4.7/3)
+# antho by exs
+ggplot(data = pheno,
+       aes(x = pist.tube.ratio,
+           y = antho)) +
+  geom_point(alpha = 0.4, col = "gray20", size = 0.5) +
+  theme_classic() +
+  xlab("Exsertion") +
+  ylab("Anthocyanin (AU)")
+ggsave("figures/exploratory/phenotype/scatter_exs_antho.pdf",
+       width = 2.2,
+       height = 4.7/3)
+
+#correlation across the population
+# output file
+outfile <- "data/clean/phenotype_correlation.txt"
+cat("####  Flavonol - antho   ####",
+    file = outfile,
+    append = FALSE,
+    sep = "\n")
+capture.output(cor.test(pheno$flav, pheno$antho),
+                 file = outfile,
+                 append = TRUE)
+cat("####  Flavonol - exsertion   ####",
+    file = outfile,
+    append = TRUE,
+    sep = "\n")
+capture.output(cor.test(pheno$flav, pheno$pist.tube.ratio),
+               file = outfile,
+               append = TRUE)
+cat("####  Exsertion - antho   ####",
+    file = outfile,
+    append = TRUE,
+    sep = "\n")
+capture.output(cor.test(pheno$pist.tube.ratio, pheno$antho),
+               file = outfile,
+               append = TRUE)
+
 # phenotype means and SD in admixture groups ----------------------------------------
 # phenotypes
 phenos <- c("antho", "flav", "pist.tube.ratio")
-
+#adm < 0.10 / >0.90
 median_whole <- numeric()
 mean_whole <- numeric()
 sd_whole <- numeric()
@@ -77,17 +170,17 @@ for (i in phenos) {
   sd_whole <- c(sd_whole,
                 sd(pheno_adm[ , i], na.rm = TRUE))
   median_adm0 <- c(median_adm0,
-                   median(pheno_adm[pheno_adm$Q2.1 < 0.25, i], na.rm = TRUE))
+                   median(pheno_adm[pheno_adm$Q2.1 < 0.10, i], na.rm = TRUE))
   mean_adm0 <- c(mean_adm0,
-                 mean(pheno_adm[pheno_adm$Q2.1 < 0.25, i], na.rm = TRUE))
+                 mean(pheno_adm[pheno_adm$Q2.1 < 0.10, i], na.rm = TRUE))
   sd_adm0 <- c(sd_adm0,
-               sd(pheno_adm[pheno_adm$Q2.1 < 0.25, i], na.rm = TRUE))
+               sd(pheno_adm[pheno_adm$Q2.1 < 0.10, i], na.rm = TRUE))
   median_adm1 <- c(median_adm1,
-                   median(pheno_adm[pheno_adm$Q2.1 > 0.75, i], na.rm = TRUE))
+                   median(pheno_adm[pheno_adm$Q2.1 > 0.90, i], na.rm = TRUE))
   mean_adm1 <- c(mean_adm1,
-                 mean(pheno_adm[pheno_adm$Q2.1 > 0.75, i], na.rm = TRUE))
+                 mean(pheno_adm[pheno_adm$Q2.1 > 0.90, i], na.rm = TRUE))
   sd_adm1 <- c(sd_adm1,
-               sd(pheno_adm[pheno_adm$Q2.1 > 0.75, i], na.rm = TRUE))
+               sd(pheno_adm[pheno_adm$Q2.1 > 0.90, i], na.rm = TRUE))
 }
 
 pheno_means <- data.frame(phenotype = phenos,
@@ -101,13 +194,20 @@ pheno_means <- data.frame(phenotype = phenos,
                           mean_adm1 = mean_adm1,
                           sd_adm1 = sd_adm1)
 write.csv(pheno_means, 
-          file = "data/clean/phenotype_means_adm2575.csv", 
+          file = "data/clean/phenotype_means_adm1090.csv", 
           quote = FALSE, 
           row.names = FALSE)
 
-# phenotype stats difference between adm groups ---------------------------
 
-outfile <- "data/clean/phenotype_admGroups2575_statistical_difference.txt"
+# adm 0.10 0.90
+pheno_adm$q0109group <- 0
+pheno_adm$q0109group[pheno_adm$Q2.1 > 0.90] <- 1
+pheno_adm$q0109group[pheno_adm$Q2.1 < 0.10] <- 2
+pheno_adm$q0109group <- as.factor(pheno_adm$q0109group)
+
+# phenotype stats difference between adm groups ---------------------------
+#adm 0.10 /0.90
+outfile <- "data/clean/phenotype_admGroups1090_statistical_difference.txt"
 
 # normally distributed:
 phenos <- c("pist.tube.ratio")
@@ -120,8 +220,8 @@ for (thispheno in phenos) {
       file = outfile,
       append = TRUE,
       sep = "\n")
-  capture.output(t.test(pheno_adm[pheno_adm$Q2.1 < 0.25, thispheno],
-                        pheno_adm[pheno_adm$Q2.1 > 0.75, thispheno],
+  capture.output(t.test(pheno_adm[pheno_adm$Q2.1 < 0.10, thispheno],
+                        pheno_adm[pheno_adm$Q2.1 > 0.90, thispheno],
                         alternative = "two.sided"),
                  file = outfile,
                  append = TRUE)
@@ -139,44 +239,132 @@ for (thispheno in phenos) {
       file = outfile,
       append = TRUE,
       sep = "\n")
-  capture.output(wilcox.test(pheno_adm[pheno_adm$Q2.1 < 0.25, thispheno],
-                             pheno_adm[pheno_adm$Q2.1 > 0.75, thispheno],
+  capture.output(wilcox.test(pheno_adm[pheno_adm$Q2.1 < 0.10, thispheno],
+                             pheno_adm[pheno_adm$Q2.1 > 0.90, thispheno],
                              alternative = "two.sided"),
                  file = outfile,
                  append = TRUE)
 }
 
+
+
 # phenotype in admixture boxplots -----------------------------------------
+# adm 0.10/0.90
 adm_pure <- rep(NA, times = 70)
-adm_pure[pheno_adm$Q2.1 < 0.25] <- "< 0.25"
-adm_pure[pheno_adm$Q2.1 > 0.75] <- "> 0.75"
+adm_pure[pheno_adm$Q2.1 < 0.10] <- "< 0.10"
+adm_pure[pheno_adm$Q2.1 > 0.90] <- "> 0.90"
 pheno_adm$pure_groups <- adm_pure
 pheno_adm$pure_groups <- as.factor(pheno_adm$pure_groups)
 
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_flav_thin.pdf",
-    width = 2,
-    height = 4)
-boxplot(pheno_adm$flav ~ pheno_adm$pure_groups,
-        col = c("#a2a2a2","#e6002e"),
-        xlab = "Admixture proportion",
-        ylab = "Trait value")
-dev.off()
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_antho_thin.pdf",
-    width = 2,
-    height = 4)
-boxplot(pheno_adm$antho ~ pheno_adm$pure_groups,
-        col = c("#a2a2a2","#e6002e"),
-        xlab = "Admixture proportion",
-        ylab = "Trait value")
-dev.off()
-pdf("figures/exploratory/phenotype/boxplot_admixture2575_pist.tube.ratio_thin.pdf",
-    width = 2,
-    height = 4)
-boxplot(pheno_adm$pist.tube.ratio ~ pheno_adm$pure_groups,
-        col = c("#a2a2a2","#e6002e"),
-        xlab = "Admixture proportion",
-        ylab = "Trait value")
-dev.off()
+# phenotype in admixture violin/boxplot -----------------------------------
+pheno_adm$q0109group <- ordered(pheno_adm$q0109group, levels = c("2", "0", "1"))
+
+admixture_col <- c("2" = "#545454",
+                   "0" = "#ffc107",
+                   "1" = "#e6002e")
+
+admixture_fill <- c("2" = "#545454",
+                   "0" = "#ffc107",
+                   "1" = "#e6002e")
+#antho
+ggplot(pheno_adm, 
+       aes(x = q0109group,
+           y = antho,
+           group = q0109group,
+           col = q0109group,
+           fill = q0109group)) + 
+  ggdist::stat_halfeye(adjust = .5,
+                       width = .7, 
+                       .width = 0, 
+                       justification = -.4, 
+                       point_colour = NA, alpha = 1) + 
+  geom_boxplot(width = .2,
+               outlier.shape = NA,
+               alpha = 0.2) +
+  geom_point(size = 2.8,
+             alpha = .8,
+             shape = 16,
+             position = position_jitter(seed = 1, width = .17)) +
+  scale_y_continuous(trans = "log") + 
+  theme_classic() +
+  scale_color_manual(values = admixture_col) +
+  scale_fill_manual(values = admixture_col) +
+  theme(legend.position = "none")
+ggsave("figures/exploratory/phenotype/boxplot_violin_vert_antho_adm0109.pdf",
+       width = 6.5*2/3*1.1,
+       height = 6.5)
+
+#flav with genotype of myb-fl
+# adm 0.10 0.90 in genotype df
+pheno_adm_gt$q0109group <- 0
+pheno_adm_gt$q0109group[pheno_adm_gt$Q2.1 > 0.90] <- 1
+pheno_adm_gt$q0109group[pheno_adm_gt$Q2.1 < 0.10] <- 2
+pheno_adm_gt$q0109group <- as.factor(pheno_adm_gt$q0109group)
+pheno_adm_gt$q0109group <- ordered(pheno_adm_gt$q0109group, levels = c("2", "0", "1"))
+# code shapes for genotype
+pheno_adm_gt$gt_shape <- 0
+pheno_adm_gt$gt_shape[pheno_adm_gt$genotype == "e"] <- 15
+pheno_adm_gt$gt_shape[pheno_adm_gt$genotype == "h"] <- 16
+pheno_adm_gt$gt_shape[pheno_adm_gt$genotype == "a"] <- 17
+pheno_adm_gt$gt_shape[is.na(pheno_adm_gt$genotype)] <- 4
+pheno_adm_gt$gt_shape <- as.factor(as.character(pheno_adm_gt$gt_shape))
+
+ggplot(pheno_adm_gt, 
+       aes(x = q0109group,
+           y = flav,
+           group = q0109group,
+           col = q0109group,
+           fill = q0109group)) + 
+  ggdist::stat_halfeye(adjust = .5,
+                       width = .7, 
+                       .width = 0, 
+                       justification = -.4, 
+                       point_colour = NA, alpha = 1) + 
+  geom_boxplot(width = .2,
+               outlier.shape = NA,
+               alpha = 0.2) +
+  geom_point(aes(shape = gt_shape),
+             size = 2.8,
+             alpha = .8,
+             position = position_jitter(seed = 16, width = .17)) +
+  theme_classic() +
+  scale_color_manual(values = admixture_col) +
+  scale_fill_manual(values = admixture_col) +
+  scale_shape_manual(values = c(15, 16, 17, 4)) +
+  theme(legend.position = "none")
+ggsave("figures/exploratory/phenotype/boxplot_violin_vert_flav_adm0109_mybfl.pdf",
+       width = 6.5*2/3,
+       height = 6.5)
+#exs
+ggplot(pheno_adm, 
+       aes(x = q0109group,
+           y = pist.tube.ratio,
+           group = q0109group,
+           col = q0109group,
+           fill = q0109group)) + 
+  ggdist::stat_halfeye(adjust = .5,
+                       width = .7, 
+                       .width = 0, 
+                       justification = -.4, 
+                       point_colour = NA, alpha = 1) + 
+  geom_boxplot(width = .2,
+               outlier.shape = NA,
+               alpha = 0.2) +
+  geom_point(size = 2.8,
+             alpha = .8,
+             shape = 16,
+             position = position_jitter(seed = 1, width = .17)) +
+  theme_classic() +
+  scale_color_manual(values = admixture_col) +
+  scale_fill_manual(values = admixture_col) +
+  theme(legend.position = "none") #+
+#scale_x_discrete(#limits = factor(c(1.57, 3.8)),
+# breaks = seq(1.6, 3.8, by = .2),
+# expand = c(-0.701, 2.001)
+#)
+ggsave("figures/exploratory/phenotype/boxplot_violin_vert_exs_adm0109.pdf",
+       width = 6.5*2/3,
+       height = 6.5)
 
 # Phenotype correlation to principal components ---------------------------
 # I test phenotype correlation to the first 10 genomic principal components.
@@ -238,21 +426,6 @@ corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue < 0.05 &
                            corr_PCpheno$Bonferroni_Pvalue >= 0.01 ] <- "*"
 corr_PCpheno$bonf_signif[corr_PCpheno$Bonferroni_Pvalue >= 0.05] <- "n.s."
 
-pl <- ggplot(data = corr_PCpheno,
-             aes(Variable1, Variable2)) +
-  geom_tile(aes(fill = Pearson_r2),
-            colour = "white") +        # adds the thin white line bw cells
-  scale_fill_gradient2(low = "red", mid = "white", high = "blue") +
-  geom_text(aes(label = bonf_signif)) +
-  xlab("Phenotypic trait") +
-  ylab("PC component") +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) 
-ggsave("figures/exploratory/phenotype/correlogram_PCTopheno.png",
-       plot = pl,
-       width = 8, height = 5)
-pl
-
 # save the results to a readable csv. These are the results reported in
 # Additional file 1, table S2
 write.csv(x = corr_PCpheno, 
@@ -270,3 +443,59 @@ rm(estimates_mt,
    thispheno,
    pvals,
    estimates)
+
+
+# phenotype correlation to admixture --------------------------------------
+# list the variables that I want to have in the correlation
+phenotypes <- c("pist.tube.ratio", "flav", "antho")
+outfile <- "data/clean/phenotype_correlation_admixture.txt"
+for (thispheno in phenotypes) {
+  cat("####    ####",
+      file = outfile,
+      append = TRUE,
+      sep = "\n")
+  cat(thispheno,
+      file = outfile,
+      append = TRUE,
+      sep = "\n")
+  capture.output(cor.test(pheno_adm$Q2.1,
+                          pheno_adm[ , thispheno]),
+                 file = outfile,
+                 append = TRUE)
+}
+
+
+# plot the phenotype correlation to admixture
+# flavonol
+ggplot(data = pheno_adm,
+       aes(x = Q2.1,
+           y = flav)) +
+  geom_point(alpha = 0.4, col = "gray20", size = 0.5) +
+  theme_classic() +
+  xlab("Admixture proportion") +
+  ylab("Flavonol content (AU)")
+ggsave("figures/exploratory/phenotype/scatter_admixture_flav.pdf",
+       width = 2.2,
+       height = 4.7/3)
+# anthocyanin
+ggplot(data = pheno_adm,
+       aes(x = Q2.1,
+           y = antho)) +
+  geom_point(alpha = 0.4, col = "gray20", size = 0.5) +
+  theme_classic() +
+  xlab("Admixture proportion") +
+  ylab("Anthocyanin content (AU)")
+ggsave("figures/exploratory/phenotype/scatter_admixture_antho.pdf",
+       width = 2.2,
+       height = 4.7/3)
+#exsertion
+ggplot(data = pheno_adm,
+       aes(x = Q2.1,
+           y = pist.tube.ratio)) +
+  geom_point(alpha = 0.4, col = "gray20", size = 0.5) +
+  theme_classic() +
+  xlab("Admixture proportion") +
+  ylab("Pistil exsertion")
+ggsave("figures/exploratory/phenotype/scatter_admixture_exsertion.pdf",
+       width = 2.2,
+       height = 4.7/3)
