@@ -34,7 +34,7 @@ pheno_adm <- merge.data.frame(pheno,
 
 # import genotype of mybfl -------------------------------------------------------
 # only available for contact zone 1
-mybfl <- read.table("data/raw/genotype_mybfl.csv",
+mybfl <- read.table("data/raw/genotype_mybfl_CAPS.csv",
                     header = TRUE,
                     sep = ",",
                     stringsAsFactors = FALSE)
