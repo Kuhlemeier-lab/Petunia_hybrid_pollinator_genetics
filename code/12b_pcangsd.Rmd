@@ -6,15 +6,15 @@ output:
   html_document: default
 ---
 
-Last modified 19/05/2022
+Last modified 14/12/2022
 
 ```{r setup, warning = FALSE}
 library(RcppCNPy)
 library(calibrate)
 library(scales)
 
-knitr::opts_knit$set(root.dir = "/xxx/hybrids/")
-knitr::opts_chunk$set(root.dir = "/xxx/hybrids/")
+knitr::opts_knit$set(root.dir = "hybrids")
+knitr::opts_chunk$set(root.dir = "hybrids")
 
 ```
 
@@ -119,6 +119,79 @@ labq$Qcolours[labq$Q2.1 >= 0.7 & labq$Q2.1 < 0.8] <- mypalAlpha[8]
 labq$Qcolours[labq$Q2.1 >= 0.8 & labq$Q2.1 < 0.9] <- mypalAlpha[9]
 labq$Qcolours[labq$Q2.1 >= 0.9] <- mypalAlpha[10]
 
+# shape as group
+labq$Q0109group <- as.character(NA)
+labq$Q0109group[labq$Q2.1 < 0.1] <- "2"
+labq$Q0109group[labq$Q2.1 > 0.9] <- "1"
+labq$Q0109group[labq$Q2.1 >= 0.10 & labq$Q2.1 <= 0.9] <- "H"
+
+pl <- function(){plot(pcs1.2,
+     pch = c(15, 17, 16)[as.factor(labq$Q0109group)],
+     cex = 1,
+     col = labq$Qcolours,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 2 (",
+                   PCperc[2], " %)"))
+legend(0.22, -0.1,
+       c("1", "H", "2"),
+       pch = c(15, 16, 17),
+       cex = 0.8,
+       title = "Group",
+       bty = "n")
+legend(0.2, 0.25,
+       legend = c("0-0.1",
+                  "0.1-0.2",
+                  "0.2-0.3",
+                  "0.3-0.4",
+                  "0.4-0.5",
+                  "0.5-0.6",
+                  "0.6-0.7",
+                  "0.7-0.8",
+                  "0.8-0.9",
+                  "0.9-1"),
+       fill = mypalAlpha,
+       cex = 0.8,
+       bty = "n",
+       text.col = "black",
+       title = "Ancestry proportion",
+       title.col = "black",
+       horiz = F)
+plot(pcs1.3,
+     pch = c(15, 17, 16)[as.factor(labq$Q0109group)],
+     cex = 1,
+     col = labq$Qcolours,
+     xlab = paste0("PC 1 (",
+                   PCperc[1], " %)"),
+     ylab = paste0("PC 3 (",
+                   PCperc[3], " %)"))
+}
+pdf("figures/exploratory/pca/pca_1and2_1and3_qmatrix.pdf",
+    width = 13, height = 6)
+par(xpd = T, mar = par()$mar + c(0,0,0,4.5),
+    mfrow = c(1, 2))
+pl()
+dev.off()
+pl()
+```
+
+A plot with the admixture for K = 2, highlight adm <0.10 and >0.90
+```{r plotadm1090}
+# plot with K groups (admixture)
+mypal <- rev(c('#e6002e', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#a2a2a2'))
+mypalAlpha = alpha(mypal, 1)
+labq$Qcolours <- as.character(NA)
+labq$Qcolours[labq$Q2.1 < 0.1] <- mypalAlpha[1]
+labq$Qcolours[labq$Q2.1 >= 0.1 & labq$Q2.1 < 0.2] <- mypalAlpha[2]
+labq$Qcolours[labq$Q2.1 >= 0.2 & labq$Q2.1 < 0.3] <- mypalAlpha[3]
+labq$Qcolours[labq$Q2.1 >= 0.3 & labq$Q2.1 < 0.4] <- mypalAlpha[4]
+labq$Qcolours[labq$Q2.1 >= 0.4 & labq$Q2.1 < 0.5] <- mypalAlpha[5]
+labq$Qcolours[labq$Q2.1 >= 0.5 & labq$Q2.1 < 0.6] <- mypalAlpha[6]
+labq$Qcolours[labq$Q2.1 >= 0.6 & labq$Q2.1 < 0.7] <- mypalAlpha[7]
+labq$Qcolours[labq$Q2.1 >= 0.7 & labq$Q2.1 < 0.8] <- mypalAlpha[8]
+labq$Qcolours[labq$Q2.1 >= 0.8 & labq$Q2.1 < 0.9] <- mypalAlpha[9]
+labq$Qcolours[labq$Q2.1 >= 0.9] <- mypalAlpha[10]
+
 pl <- function(){plot(pcs1.2,
      pch = c(16, 17)[as.factor(labq$q2_group)],
      cex = 1,
@@ -160,48 +233,10 @@ plot(pcs1.3,
      ylab = paste0("PC 3 (",
                    PCperc[3], " %)"))
 }
-pdf("figures/exploratory/pca/pca_1and2_1and3_qmatrix.pdf",
+pdf("figures/exploratory/pca/pca_1and2_1and3_qmatrixq10q90.pdf",
     width = 13, height = 6)
 par(xpd = T, mar = par()$mar + c(0,0,0,4.5),
     mfrow = c(1, 2))
-pl()
-dev.off()
-pl()
-```
-
-Plot with parental IDs:
-
-```{r plotparental}
-pl <- function(){plot(pcs1.2,
-     pch = 16,
-     cex = 1,
-     col = as.factor(labq$parental),
-     xlab = paste0("PC 1 (",
-                   PCperc[1], " %)"),
-     ylab = paste0("PC 2 (",
-                   PCperc[2], " %)"),
-     main = "PC 1 and 2")
-textxy(pcs1.2[, 1],
-       pcs1.2[, 2],
-       as.character(labq$parental),
-       cex = 0.7)
-plot(pcs1.3,
-     pch = 16,
-     cex = 1,
-     col = as.factor(labq$parental),
-     xlab = paste0("PC 1 (",
-                   PCperc[1], " %)"),
-     ylab = paste0("PC 3 (",
-                   PCperc[3], " %)"),
-     main = "PC 1 and 3")
-textxy(pcs1.3[, 1],
-       pcs1.3[, 2],
-       as.character(labq$parental),
-       cex = 0.7)
-}
-pdf("figures/exploratory/pca/pca_1and2_1and3_parentals.pdf",
-    width = 12, height = 6)
-par(mfrow = c(1, 2))
 pl()
 dev.off()
 pl()
@@ -244,75 +279,38 @@ dev.off()
 pl()
 ```
 
+Plot with correlation to admixture proportion
+```{r plotadmcorr}
+cor.test(pcs1.2[ ,1],
+         labq$Q2.1)
 
-Plot with phenotype.
+# plot with adm < 0.10 / > 0.90 groups (admixture)
+mypal <- rev(c('#e6002e', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#ffc107', '#a2a2a2'))
+mypalAlpha = alpha(mypal, 1)
+labq$Qcolours <- as.character(NA)
+labq$Qcolours[labq$Q2.1 < 0.1] <- mypalAlpha[1]
+labq$Qcolours[labq$Q2.1 >= 0.1 & labq$Q2.1 < 0.2] <- mypalAlpha[2]
+labq$Qcolours[labq$Q2.1 >= 0.2 & labq$Q2.1 < 0.3] <- mypalAlpha[3]
+labq$Qcolours[labq$Q2.1 >= 0.3 & labq$Q2.1 < 0.4] <- mypalAlpha[4]
+labq$Qcolours[labq$Q2.1 >= 0.4 & labq$Q2.1 < 0.5] <- mypalAlpha[5]
+labq$Qcolours[labq$Q2.1 >= 0.5 & labq$Q2.1 < 0.6] <- mypalAlpha[6]
+labq$Qcolours[labq$Q2.1 >= 0.6 & labq$Q2.1 < 0.7] <- mypalAlpha[7]
+labq$Qcolours[labq$Q2.1 >= 0.7 & labq$Q2.1 < 0.8] <- mypalAlpha[8]
+labq$Qcolours[labq$Q2.1 >= 0.8 & labq$Q2.1 < 0.9] <- mypalAlpha[9]
+labq$Qcolours[labq$Q2.1 >= 0.9] <- mypalAlpha[10]
 
-```{r plotpheno}
-# import phenotype data
-pheno <- read.table("data/clean/phenotype_sequenced_individuals.csv",
-                    sep = ",",
-                    header = TRUE,
-                    stringsAsFactors = FALSE)
-# order them as the PCA df
-pheno <- pheno[match(labq$new_id_short, pheno$new_id_short), ]
 
-# plot flower colour and UV and pistil tube ratio
-flColourPalette = c('dusty red'='#ffa500', 
-                    'dark pink/red'='#cc3278',
-                    'pale pink'='#eea2ae', 
-                    'pink'='#ff33b3', 
-                    'purple'='#7d26cd', 
-                    'red'='#ef0001', 
-                    'white'='#9e9e9e' 
-)
-flColourPaletteAlpha <- alpha(flColourPalette, 0.5)
-names(flColourPaletteAlpha) <- names(flColourPalette)
-plantColour <- flColourPaletteAlpha[match(pheno$colour, names(flColourPaletteAlpha))]
-plantUV <- c(16, 17)[match(pheno$uv, c("a", "r"))]
-
-pl <- function(){plot(pcs1.2,
-     pch = plantUV,
-     cex = 1,
-     col = plantColour,
-     xlab = paste0("PC 1 (",
-                   PCperc[1], " %)"),
-     ylab = paste0("PC 2 (",
-                   PCperc[2], " %)"),
-     main = "PC 1 and 2")
-legend(0.2, 0.27,
-       c("Absorbant", "Reflective"),
-       pch = c(16, 17),
-       cex = 1,
-       title = "UV",
-       bty = "n")
-legend(0.2, 0.15,
-       names(flColourPalette),
-       col = flColourPalette,
-       pch = 15,
-       cex = 1,
-       title = "Colour",
-       bty = "n")
-plot(pcs1.3,
-     pch = plantUV,
-     cex = 1,
-     col = plantColour,
-     xlab = paste0("PC 1 (",
-                   PCperc[1], " %)"),
-     ylab = paste0("PC 3 (",
-                   PCperc[3], " %)"),
-     main = "PC 1 and 3")
+pl <- function(){plot(pcs1.2[ , 1],
+                      labq$Q2.1,
+                      pch = 16,
+                      cex = 1,
+                      col = labq$Qcolours,
+                      xlab = paste0("PC1"),
+                      ylab = paste0("Admixture proportion"))
 }
-pdf("figures/exploratory/pca/pca_1and2_1and3_pheno.pdf",
-    width = 13, height = 6)
-par(xpd = T, mar = par()$mar + c(0,0,0,5),
-    mfrow = c(1, 2))
+pdf("figures/exploratory/pca/pca1_correlation_admixture.pdf",
+    width = (13-2)/2, height = 6)
 pl()
 dev.off()
 pl()
-```
-
-Package versions
-
-```{r session}
-sessionInfo()
 ```
