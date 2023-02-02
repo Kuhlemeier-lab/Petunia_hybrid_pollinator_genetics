@@ -1,16 +1,17 @@
 # this script uses as input the files produced with realSFS
-# Last modified 16/06/2022
+# Last modified 13/12/2022
 
-workdir <- "/xxx/hybrids/"
+workdir <- "hybrids"
 setwd(workdir)
 
 # libraries ---------------------------------------------------------------
 library(ggplot2)
 library(dplyr)
 
+
+# admixture <0.10 / >0.10 -------------------------------------------------
 # import fst unfolded ------------------------------------------------------
-# 200 kb window 
-fst <- read.table("data/raw/fst/hf_ba_cr09_mm005_admixture_unfolded_slidingwindow200kb100kb",
+fst <- read.table("data/raw/fst/hf_ba_cr09_mm005_admixture0901_unfolded_slidingwindow200kb100kb",
                   header = TRUE,
                   sep = "\t",
                   dec = ".",
@@ -68,7 +69,30 @@ ggplot(data = fst,
   xlab("Position (Mb)") +
   ylab("Fst value") +
   theme(strip.background = element_blank())
-ggsave("figures/exploratory/fst/fst_admixturePops2575_unfolded_wind200kstep100k.png",
+ggsave("figures/exploratory/fst/fst_admixturePops1090_unfolded_wind200kstep100k.png",
+       width = 8,
+       height = 3,
+       dpi = 600)
+
+q95 <- quantile(fst$value, probs = 0.95)
+q95 #0.7331405
+
+# with 95th quantile threshold
+ggplot(data = fst,
+       aes(x = cum.dist/1000000,
+           y = value)) +
+  geom_point(col = "#737373",
+             size = 0.2) +
+  geom_smooth(col = "#e6002e") +
+  facet_wrap(~chrFacet, 
+             nrow = 1,
+             scales = "free_x") +
+  theme_classic() +
+  xlab("Position (Mb)") +
+  ylab("Fst value") +
+  theme(strip.background = element_blank()) +
+  geom_hline(yintercept = q95, col = "black", lty = 2)
+ggsave("figures/exploratory/fst/fst_admixturePops1090_unfolded_wind200kstep100k_wQ95thresh.png",
        width = 8,
        height = 3,
        dpi = 600)
